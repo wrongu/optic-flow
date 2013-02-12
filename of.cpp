@@ -9,6 +9,18 @@
 
 namespace of{
 
+	void continuation_method(const Mat & img, Mat & dst, int k_max, double gamma, double alpha, double beta){
+		Mat *scales = new Mat[k_max+1];
+		for(int k=0; k<=k_max; k++){
+			double scale = pow(0.95, (double)(k_max-k));
+			Mat temp;
+			cv::resize(img, temp, Size(0,0), scale, scale);
+			scales[k] = temp;
+		}
+
+		delete[] scales;
+	}
+
 	void best_descriptor_match(const Mat_<vec_d> & desc1, const Mat_<vec_d> & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){
 		for(int r=0; r<desc1.rows; ++r){
 			std::cout << "desc. match row " << r << " of " << desc1.rows << std::endl;

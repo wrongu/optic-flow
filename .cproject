@@ -81,7 +81,7 @@
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.debug.1294763612.1890922642." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.exe.debug.1351506115.702794588" name="Cross GCC">
 							<targetPlatform archList="all" binaryParser="" id="cdt.managedbuild.toolchain.gnu.cross.exe.debug.1351506115.702794588.777293531" isAbstract="false" osList="all"/>
-							<builder autoBuildTarget="all" buildPath="${workspace_loc:/optic flow/Debug}" cleanBuildTarget="clean" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="cdt.managedbuild.builder.gnu.cross.713771049.1325944896" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="false"/>
+							<builder autoBuildTarget="all" buildPath="${workspace_loc:/optic flow/}" cleanBuildTarget="clean" enableAutoBuild="false" enableCleanBuild="true" enabledIncrementalBuild="true" id="cdt.managedbuild.builder.gnu.cross.713771049.1325944896" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="false"/>
 						</toolChain>
 					</folderInfo>
 				</configuration>
@@ -110,6 +110,9 @@
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Release">
+			<resource resourceType="PROJECT" workspacePath="/optic flow"/>
+		</configuration>
+		<configuration configurationName="BigBrain">
 			<resource resourceType="PROJECT" workspacePath="/optic flow"/>
 		</configuration>
 		<configuration configurationName="Debug">

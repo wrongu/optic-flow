@@ -3,3 +3,4 @@
 *.o
 Debug/optic\ flow
 optic\ flow
+_*

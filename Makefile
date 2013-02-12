@@ -1,26 +1,29 @@
+UNAME = $(shell uname)
+ifeq ($(UNAME), Linux)
+INCLUDE = -I~/opencv/include/opencv
+else
+INCLUDE = -I/usr/local/include/opencv
+endif
 CC = g++
-C_FLAGS = -Wall -pedantic -g -save-temps
-INCLUDE = -Iinclude/ -I/usr/local/include/opencv
-OBJS = segmentation.o math_helpers.o features.o functors.o
-EX_PREFIX = _
+#LIBS := -lopencv_video -lopencv_features2d  -lopencv_ml -lopencv_core -lopencv_imgproc -lopencv_highgui
+C_FLAGS = -Wall -pedantic -g
+OBJS = segmentation.o math_helpers.o features.o functors.o of.o driver.o
+EXECUTABLE = _run
 
-all: driver
+-include $(OBJS:.o=.d)
 
-driver: $(OBJS)
-	$(CC) $(C_FLAGS) $(OBJS) -o driver
+all: $(EXECUTABLE)
 
-%.o: %.cpp %.hpp
+$(EXECUTABLE): $(OBJS)
+	$(CC) `pkg-config --libs opencv` $(C_FLAGS) $(OBJS) -o $(EXECUTABLE)
+
+%.o: %.cpp
 	@echo 'Compiling $<'
-	$(CC) -c $(C_FLAGS) `pkg-config --cflags opencv` $(INCLUDE) `pkg-config --libs opencv` $< -o $@
+	$(CC) -c $(C_FLAGS) $(INCLUDE) $< -o $@
+	$(CC) -MM $(C_FLAGS) $*.cpp > $*.d
 	@echo ''
-
-$(EX_PREFIX)%: %.cpp
-	$(CC) $(C_FLAGS) `pkg-config --cflags opencv` $(INCLUDE) `pkg-config --libs opencv` $< -o $@
 
 clean:
 	rm *.o
-	rm *.ii
-	rm *.s
-
-debug:
-	make 'CFLAGS=$(CFLAGS) -g'
+	rm *.d
+	rm _run
