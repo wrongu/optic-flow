@@ -167,7 +167,7 @@ int feat_exec(int argc, char** argv){
 
 	cout << "image read. creating HOGFeature descriptors." << endl;
 	of::SparseSample ss1(4, 0);
-	of::SparseSample ss2(4, 0);
+	of::SparseSample ss2(1, 0);
 	// compute descriptors of first "frame" sparsely
 	Mat_<vec_d> HOG_descriptors = HOG_get_full_descriptors(img, 3, ss1);
 	// compute descriptors of second "frame" at each pixel

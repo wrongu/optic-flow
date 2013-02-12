@@ -1,6 +1,6 @@
 UNAME = $(shell uname)
 ifeq ($(UNAME), Linux)
-INCLUDE = -I~/opencv/include/opencv
+INCLUDE = -I/home/rlange/opencv/include/opencv
 else
 INCLUDE = -I/usr/local/include/opencv
 endif
