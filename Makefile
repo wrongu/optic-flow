@@ -2,7 +2,12 @@ UNAME = $(shell uname)
 ifeq ($(UNAME), Linux)
 HOME = /home/rlange
 INCLUDE = -I$(HOME)/opencv/include/opencv \
--I$(HOME)/opencv/modules/core/include
+-I$(HOME)/opencv/modules/core/include \
+-I$(HOME)/opencv/modules/imgproc/include \
+-I$(HOME)/opencv/modules/video/include \
+-I$(HOME)/opencv/modules/features2d/include \
+-I$(HOME)/opencv/modules/ml/include \
+-I$(HOME)/opencv/modules/highgui/include
 else
 INCLUDE = -I/usr/local/include/opencv
 endif
