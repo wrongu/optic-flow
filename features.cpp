@@ -87,7 +87,7 @@ void HOGFeature::sparseFilter2D(Mat_<vec_d> & dst){
 
 	// sparse coordinates (r,c)
 	for(int r=0; r<sparseRows; ++r){
-		cout << "row " << r << " of " << sparseRows << endl;
+		cout << "row " << r+1 << " of " << sparseRows << endl;
 		for(int c=0; c<sparseCols; ++c){
 			// dense coordintates (y,x)
 			int y = sampler.sparse2Dense(r);
