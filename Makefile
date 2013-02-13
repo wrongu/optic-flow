@@ -1,24 +1,19 @@
 UNAME = $(shell uname)
 ifeq ($(UNAME), Linux)
 HOME = /home/rlange
-INCLUDE = -I$(HOME)/opencv/include/opencv \
--I$(HOME)/opencv/modules/core/include \
--I$(HOME)/opencv/modules/imgproc/include \
--I$(HOME)/opencv/modules/video/include \
--I$(HOME)/opencv/modules/features2d/include \
--I$(HOME)/opencv/modules/ml/include \
--I$(HOME)/opencv/modules/highgui/include \
--I$(HOME)/opencv/modules/calib3d/include \
--I$(HOME)/opencv/modules/objdetect/include \
--I$(HOME)/opencv/modules/legacy/include \
--I$(HOME)/opencv/modules/flann/include
-LIBS = `pkg-config --libs opencv`
+INCLUDE = `pkg-config --cflags $(HOME)/local/lib/pkgconfig/opencv.pc` 
+LIBS = -L$(HOME)/local/lib `cat libflags.make`
+LIB_PATH = $(HOME)/local/lib
+#LIBS = -L$(HOME)/local/lib `pkg-config --libs $(HOME)/local/lib/pkgconfig/opencv.pc`
+#LIBS = -L$(HOME)/local/lib/ 
+#LIBS := -L$(HOME)/local/lib -lopencv_video -lopencv_ml -lopencv_core -lopencv_imgproc -lopencv_highgui
+#LIBS = -L$(HOME)/local/lib2 `ls $(HOME)/local/lib2/ | sed 's:l.*:-l& \\:'`
 else
 INCLUDE = -I/usr/local/include/opencv
 LIBS = `pkg-config --libs opencv`
+LIB_PATH = 
 endif
-CC = g++
-#LIBS := -lopencv_video -lopencv_features2d  -lopencv_ml -lopencv_core -lopencv_imgproc -lopencv_highgui
+CC = gcc
 C_FLAGS = -Wall -Wno-long-long -pedantic -g
 OBJS = segmentation.o math_helpers.o features.o functors.o of.o driver.o
 EXECUTABLE = _run
@@ -26,9 +21,10 @@ EXECUTABLE = _run
 -include $(OBJS:.o=.d)
 
 all: $(EXECUTABLE)
+.PHONY: all
 
-$(EXECUTABLE): $(OBJS)
-	$(CC) $(LIBS) $(C_FLAGS) $(OBJS) -o $(EXECUTABLE)
+$(EXECUTABLE): LIBPATH $(OBJS)
+	$(CC) $(C_FLAGS) $(OBJS) $(LIBS) -o $(EXECUTABLE)
 
 %.o: %.cpp
 	@echo 'Compiling $<'
@@ -40,3 +36,9 @@ clean:
 	rm *.o
 	rm *.d
 	rm _run
+
+LIBPATH:
+	@if test "${LD_LIBRARY_PATH}" == "" ; then \
+		echo "LD_LIBRARY_PATH not set. exiting."; \
+		exit 1; \
+	fi	
