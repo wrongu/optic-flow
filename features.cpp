@@ -136,12 +136,31 @@ Mat_<vec_d> HOG_get_full_descriptors(const Mat & img, int radius, const of::Spar
 	return descriptors;
 }
 
+void parse_opt(char* opt_string, bool & vis_flag, std::string & out_file){
+	if(opt_string[0] != '-') return;
+	switch(opt_string[1]){
+	case 'h':
+		vis_flag = false;
+		break;
+	case 'o':
+		out_file = &(opt_string[2]);
+		break;
+	}
+}
+
 // TEST DRIVER
 int feat_exec(int argc, char** argv){
 	cout << "feat_exec entered" << endl;
 
-	std::string f = "/Users/Richard/Pictures/bakerlibrary.jpg";
-//	std::string f = "/Users/Richard/Pictures/80000V_flower.jpg";
+	bool disp_output = true;
+
+	std::string f = "images/bakerlibrary.jpg";
+	std::string out_file = "output/result.jpg";
+	if(argc > 1)
+		f = argv[1];
+	for(int i=2; i < argc; ++i)
+		parse_opt(argv[i], disp_output, out_file);
+
 	Mat img = imread(f,1);
 
 	if(!img.data){
@@ -156,13 +175,15 @@ int feat_exec(int argc, char** argv){
 
 	/*
 	// Test image rotation (works)
-    namedWindow("original");
-    namedWindow("rotated");
-    imshow("original", img);
-    imshow("rotated", img_rotated);
-    waitKey(0);
-    destroyWindow("original");
-    destroyWindow("rotated");
+	if(disp_output){
+		namedWindow("original");
+		namedWindow("rotated");
+		imshow("original", img);
+		imshow("rotated", img_rotated);
+		waitKey(0);
+		destroyWindow("original");
+		destroyWindow("rotated");
+	}
 	 */
 
 	cout << "image read. creating HOGFeature descriptors." << endl;
@@ -182,11 +203,16 @@ int feat_exec(int argc, char** argv){
 
 	Mat overlay = of::overlay_field(img, flow_field);
 
-	std::string title ="Optic Flow Visualization";
-	namedWindow(title);
-	imshow(title, overlay);
-	waitKey(0);
-	destroyWindow(title);
+	if(disp_output){
+		std::string title ="Optic Flow Visualization";
+		namedWindow(title);
+		imshow(title, overlay);
+		waitKey(0);
+		destroyWindow(title);
+	}
+
+	// SAVE FILE
+	imwrite(out_file, overlay);
 
 	cout << "--done--" << endl;
 
