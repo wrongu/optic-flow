@@ -3,8 +3,7 @@ ifeq ($(UNAME), Linux)
 HOME = /home/rlange
 INCLUDE = `pkg-config --cflags $(HOME)/local/lib/pkgconfig/opencv.pc` 
 LIBS = -L$(HOME)/local/lib `cat libflags.make`
-LIB_REQ = LIBPATH
-CC = gcc
+LIB_PATH = $(HOME)/local/lib
 #LIBS = -L$(HOME)/local/lib `pkg-config --libs $(HOME)/local/lib/pkgconfig/opencv.pc`
 #LIBS = -L$(HOME)/local/lib/ 
 #LIBS := -L$(HOME)/local/lib -lopencv_video -lopencv_ml -lopencv_core -lopencv_imgproc -lopencv_highgui
@@ -12,11 +11,11 @@ CC = gcc
 else
 INCLUDE = -I/usr/local/include/opencv
 LIBS = `pkg-config --libs opencv`
-LIB_REQ = 
-CC = g++
+LIB_PATH = 
 endif
+CC = gcc
 C_FLAGS = -Wall -Wno-long-long -pedantic -g
-OBJS = of.o driver.o features.o functors.o segmentation.o math_helpers.o
+OBJS = segmentation.o math_helpers.o features.o functors.o of.o driver.o
 EXECUTABLE = _run
 
 -include $(OBJS:.o=.d)
@@ -24,7 +23,7 @@ EXECUTABLE = _run
 all: $(EXECUTABLE)
 .PHONY: all
 
-$(EXECUTABLE): $(OBJS) $(LIB_REQ)
+$(EXECUTABLE): LIBPATH $(OBJS)
 	$(CC) $(C_FLAGS) $(OBJS) $(LIBS) -o $(EXECUTABLE)
 
 %.o: %.cpp
