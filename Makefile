@@ -12,7 +12,7 @@ INCLUDE = -I$(HOME)/opencv/include/opencv \
 -I$(HOME)/opencv/modules/objdetect/include \
 -I$(HOME)/opencv/modules/legacy/include \
 -I$(HOME)/opencv/modules/flann/include
-LIBS = 
+LIBS = `pkg-config --libs opencv`
 else
 INCLUDE = -I/usr/local/include/opencv
 LIBS = `pkg-config --libs opencv`

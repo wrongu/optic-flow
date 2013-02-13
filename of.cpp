@@ -9,16 +9,45 @@
 
 namespace of{
 
-	void continuation_method(const Mat & img, Mat & dst, int k_max, double gamma, double alpha, double beta){
-		Mat *scales = new Mat[k_max+1];
+	// continuation_method(src, dst, ...)
+	// 	this is an implementation of the algorithm outlined in "Large Displacement Optical Flow: Descriptor Matching in Variational Motion Estimation"
+	//	dst should be of type CV_32FC2
+	//		channel 0 is the row/vertical component of OF; channel 1 is column/horizontal
+	//  img1 and img2 can be any type as long as they are the same.
+	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max, double gamma, double alpha, double beta, int MAX_ITER, double eps){
+		Mat *scales1 = new Mat[k_max+1];
+		Mat *scales2 = new Mat[k_max+1];
+		// This loop constructs multiple scales of the image such that
+		//	scales[0] contains the lowest resolution and
+		//	scales[k_max] contains the highest resolution
 		for(int k=0; k<=k_max; k++){
 			double scale = pow(0.95, (double)(k_max-k));
-			Mat temp;
-			cv::resize(img, temp, Size(0,0), scale, scale);
-			scales[k] = temp;
+			// first frame
+			Mat temp1;
+			cv::resize(img1, temp1, Size(0,0), scale, scale);
+			scales1[k] = temp1;
+			// second frame
+			Mat temp2;
+			cv::resize(img2, temp2, Size(0,0), scale, scale);
+			scales2[k] = temp2;
 		}
 
-		delete[] scales;
+		// ===================
+		// CONTINUATION METHOD
+		// ===================
+		// loop over image scales, coarse to fine
+		for(int k=0; k<=k_max; ++k){
+			// 'delta' is our distance from the fixed point solution. break when it is within 'eps' of correct
+			//	initialized to eps to ensure that the loop is entered
+			double delta = eps;
+			// fixed point iteration loop: loop until convergence (specified by 'eps') or max iterations
+			for(int l=0; l < MAX_ITER && delta >= eps; ++l){
+
+			}
+		}
+		// TODO - final iteration with beta set to 0 to approximate the continuous limit
+		delete[] scales1;
+		delete[] scales2;
 	}
 
 	void best_descriptor_match(const Mat_<vec_d> & desc1, const Mat_<vec_d> & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){

@@ -31,7 +31,7 @@ namespace of{
 
 	// function headers
 	void best_descriptor_match(const Mat_<vec_d> & desc1, const Mat_<vec_d> & desc2, Mat & dst, const SparseSample & sp1 = NO_SPARSE, const SparseSample & sp2  = NO_SPARSE);
-	void continuation_method(const Mat & img, Mat & dst, int k_max=4, double gamma=1.0, double alpha=1.0, double beta=1.0);
+	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max=4, double gamma=1.0, double alpha=1.0, double beta=1.0, int MAX_ITER = 1000, double eps = 0.00001);
 	Mat overlay_field(const Mat & src, const Mat & flow_field);
 	Scalar HSV2BGR(Scalar hsv);
 
