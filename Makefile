@@ -24,7 +24,9 @@ EXECUTABLE = _run
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): LIBPATH $(OBJS)
-	$(CC) $(C_FLAGS) $(OBJS) $(LIBS) -o $(EXECUTABLE)
+	@echo 'building $(EXECUTABLE)'
+	@$(CC) $(C_FLAGS) $(OBJS) $(LIBS) -o $(EXECUTABLE)
+	@echo '..done'
 
 %.o: %.cpp
 	@echo 'Compiling $<'

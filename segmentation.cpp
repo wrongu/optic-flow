@@ -67,6 +67,9 @@ double filter_max(Mat image, Point pt1, Point pt2){
 //		theta:   radians measure of rotation in [0, pi)
 //		1: 0 for gaussian, 1 for 1st deriv y, 2 for 2nd deriv y
 Mat get_gaussian_derivative_filter(int m_width, double *sigma, double sample_radius, double theta, int n_deriv, int fine){
+	// TODO - instead of returning 2D convolved filter, return separated row and col components so
+	//	the filter can be applied separately. (the problem with this is that it would require rotating
+	//	the source and destination images (if using filter2D())
 	// TODO - use finer resolution for averaging?
 	Mat ret = Mat::zeros(m_width, m_width, CV_64F);
 	
@@ -186,22 +189,26 @@ Mat get_texture_channel(const Mat & img, int num_textures, int kmeans_attempts){
  *	filters.
  */
 Mat get_4_channels(const Mat & img, int num_textures){
-	Mat imgLab(img.rows, img.cols, CV_64FC3);
-	// convert to L*a*b space for first 3 channels
-	cout << "getting Lab colors\n" << endl;
+	Mat imgLab(img.rows, img.cols, CV_32FC3);
+	// convert to L*a*b space for first 3 channels. automatically uses 32F type
+	cout << "getting Lab colors: 3 channels" << endl;
 	cvtColor(img, imgLab, CV_RGB2Lab);
-	// get last channel: texture
-	cout << "getting texture channel\n" << endl;
-	Mat tex = get_texture_channel(img, num_textures);
-	
-	cout << "building 4-channel matrix\n" << endl;
-	Mat * splits = new Mat[4];
+
+	Mat splits[4];
 	split(imgLab, splits);
+	double scales[] = {1.0, 1.0, 1.0};
+	disp_n_imgs(splits, 2, 2, scales, true, 1);
+
+	// get last channel: texture
+	cout << "getting texture channel" << endl;
+	Mat tex = get_texture_channel(img, num_textures);
+	tex.convertTo(tex, CV_32F);
+	
+	cout << "building 4-channel image from 3 Lab and 1 texture" << endl;
 	splits[3] = tex;
 	
-	Mat ret(img.cols, img.rows, CV_64F);
+	Mat ret(img.cols, img.rows, CV_64FC4);
 	merge(splits, 4, ret);
-	delete[] splits;
 	return ret;
 }
 
@@ -245,26 +252,24 @@ Mat get_1D_texture_vector(const Mat & img){
 	Mat ret = img17d.reshape(1, img17d.rows*img17d.cols);
 	ret.convertTo(ret, CV_32F);
 	
-	//cout << "ret is %d x %d with ch = %d\n", ret.rows, ret.cols, ret.channels());
-	
-	// cout << "type of ret is %d. CV_32F is %d\n", ret.type() , CV_32F);
-	
-	cout << "vector created.\n" << endl;
 	return ret;
 }
 
-Mat disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness, bool window){
+Mat disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness, bool window, int ignore){
 	
+	int _type = CV_32F;
+
 	int w = imgs[0].cols;
 	int h = imgs[0].rows;
 	
-	Mat block_img(h*rows, w*cols, CV_64F, 0.5);
-	Mat tmp_copy(h, w, CV_64F);
+	Mat block_img(h*rows, w*cols, _type, 0.5);
+	Mat tmp_copy(h, w, _type);
 	
+	int n = rows*cols;
 	int i = 0;
-	for(int r = 0; r < rows; ++r){
-		for(int c=0; c < cols; ++c){
-			imgs[i].convertTo(tmp_copy, CV_64F, brightness[i]);
+	for(int r = 0; r < rows && i < n-ignore; ++r){
+		for(int c=0; c < cols && i < n-ignore; ++c){
+			imgs[i].convertTo(tmp_copy, _type, brightness[i]);
 			tmp_copy.copyTo(block_img(Rect(c * w, r * h, w, h)));
 			++i;
 		}
@@ -272,9 +277,8 @@ Mat disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness, bool 
 	
 	//cout << "depth is %d\t 32F is %d\n", block_img.depth(), CV_32F);
 	if(window){
-		char * name;
-		sprintf(name, "%d channel image", rows*cols);
-	
+		char name[32];
+		sprintf(name, "%d channels separated", n);
 		namedWindow(name);
 		imshow(name, block_img);
 		waitKey(0);
@@ -302,13 +306,15 @@ Mat get_blur_filter(int width){
 
 int seg_exec(std::string file_in, std::string file_out, bool disp){
 	cout << "reading image" << endl;
-	Mat img = imread(file_in, 1);
+	Mat img = imread(file_in);
+	img.convertTo(img, CV_32F);
 	
 	Mat four_channel = get_4_channels(img);
 	
 	Mat * chs = new Mat[4];
 	split(four_channel, chs);
-	double brightness [] = {1/255.0, 1/255.0, 1/255.0, 1/40.0};
+//	double brightness [] = {1/255.0, 1/255.0, 1/255.0, 1/40.0};
+	double brightness [] = {1.0, 1.0, 1.0, 32.0};
 	Mat result = disp_n_imgs(chs, 2, 2, brightness, disp);
 	
 	imwrite(file_out, result);

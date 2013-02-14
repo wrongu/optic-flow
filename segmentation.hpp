@@ -18,7 +18,7 @@ Mat get_center_difference_filter(int m_width, double sigma, double sample_radius
 Mat get_texture_channel(const Mat & img, int num_textures, int kmeans_attempts = 1);
 Mat get_4_channels(const Mat & img, int num_textures = 32);
 MatND get_1D_texture_vector(const Mat & img);
-void disp_n_imgs(const Mat * imgs, int rows, int cols);
+Mat disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness, bool window, int ignore=0);
 Mat G(const Mat& srouce, int bin_radius = 10);
 Mat rotateImage(const Mat& source, double angle);
 Mat get_blur_filter(int width);

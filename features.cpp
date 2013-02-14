@@ -27,7 +27,7 @@ HOGFeature::HOGFeature(const Mat & img, int radius, const of::SparseSample & ss,
 
 void HOGFeature::initialize(){
 	cout << "initialize() entered" << endl;
-	precomputed = Mat_<vec_d>(sampler.dense2Sparse(src.rows), sampler.dense2Sparse(src.cols));
+	precomputed = Mat_<vec_d>(sampler.dense2Sparse(src.rows)+1, sampler.dense2Sparse(src.cols)+1);
 	if(n_gradients < 1) n_gradients = 1;
 	gradient_filters = new Mat[n_gradients];
 	double sigma[] = {5.0, 5.0};
@@ -92,8 +92,8 @@ void HOGFeature::sparseFilter2D(Mat_<vec_d> & dst){
 			// dense coordintates (y,x)
 			int y = sampler.sparse2Dense(r);
 			int x = sampler.sparse2Dense(c);
-			// printf("sparseFilter2D : src has size %d x %d\taccessing (%d, %d)\n", src.rows, src.cols, y, x);
-			// printf("sparseFilter2D : dst has size %d x %d\taccessing (%d, %d)\n", dst.rows, dst.cols, r, c);
+//			printf("sparseFilter2D : src has size %d x %d\taccessing (%d, %d)\n", src.rows, src.cols, y, x);
+//			printf("sparseFilter2D : dst has size %d x %d\taccessing (%d, %d)\n", dst.rows, dst.cols, r, c);
 			// vec_d & val = dst(r,c);
 			// cout << "dst(r,c) access check: " << &val << endl;
 			dst(r, c) = eval(y, x);
