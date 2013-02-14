@@ -4,6 +4,7 @@ HOME = /home/rlange
 INCLUDE = `pkg-config --cflags $(HOME)/local/lib/pkgconfig/opencv.pc` 
 LIBS = -L$(HOME)/local/lib `cat libflags.make`
 LIB_PATH = $(HOME)/local/lib
+CC = gcc
 #LIBS = -L$(HOME)/local/lib `pkg-config --libs $(HOME)/local/lib/pkgconfig/opencv.pc`
 #LIBS = -L$(HOME)/local/lib/ 
 #LIBS := -L$(HOME)/local/lib -lopencv_video -lopencv_ml -lopencv_core -lopencv_imgproc -lopencv_highgui
@@ -11,9 +12,9 @@ LIB_PATH = $(HOME)/local/lib
 else
 INCLUDE = -I/usr/local/include/opencv
 LIBS = `pkg-config --libs opencv`
-LIB_PATH = 
+LIB_PATH =
+CC = g++
 endif
-CC = gcc
 C_FLAGS = -Wall -Wno-long-long -pedantic -g
 OBJS = segmentation.o math_helpers.o features.o functors.o of.o driver.o
 EXECUTABLE = _run
@@ -38,7 +39,7 @@ clean:
 	rm _run
 
 LIBPATH:
-	@if test "${LD_LIBRARY_PATH}" == "" ; then \
+	@if test "$(LIB_PATH)" != "" && "${LD_LIBRARY_PATH}" == "" ; then \
 		echo "LD_LIBRARY_PATH not set. exiting."; \
 		exit 1; \
 	fi	

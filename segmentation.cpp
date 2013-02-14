@@ -1,10 +1,13 @@
 #include "segmentation.hpp"
 
+using std::cout;
+using std::endl;
+
 Mat apply_all_filters(const Mat & image, const Mat kernel_set[], const int n_filters){
 	// construct N-channel matrix from convolution with kernels
 	Mat *channels = new Mat[n_filters];
 	for(int i=0; i<n_filters; i++){
-		printf("\tapplying kernel %d\n", i);
+		cout << "\tapplying kernel" << i << endl;
 		channels[i] = Mat(image.cols, image.rows, CV_64F);
 		filter2D(image, channels[i], -1, kernel_set[i]);
 	}
@@ -105,7 +108,7 @@ Mat get_gaussian_derivative_filter(int m_width, double *sigma, double sample_rad
 			double rotx = x*c - y*s;
 			double roty = x*s + y*c;
 			
-			// printf("[%f, %f, %f]\n", domain_fine[0], rotx, *(domain_fine.end()-1));
+			// cout << "[%f, %f, %f]\n", domain_fine[0], rotx, *(domain_fine.end()-1));
 			double fx = linear_sample_func(domain_fine, x_bell, rotx);
 			double fy = linear_sample_func(domain_fine, y_bell, roty);
 			
@@ -161,10 +164,10 @@ Mat get_texture_channel(const Mat & img, int num_textures, int kmeans_attempts){
 	Mat text_vec = get_1D_texture_vector(img_gray);
 	Mat labels;
 	// sample code thanks to http://stackoverflow.com/questions/10240912/input-matrix-to-opencv-kmeans-clustering
-	printf("running kmeans..\n");
+	cout << "running kmeans" << endl;
 	kmeans(text_vec, num_textures, labels, TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 0.0001, 10000), 
 			kmeans_attempts, KMEANS_PP_CENTERS);
-	printf("kmeans done.\n");
+	cout << "kmeans done" << endl;
 	
 	labels.convertTo(labels, CV_8U);
 	Mat ret = labels.reshape(1, img.rows);
@@ -185,13 +188,13 @@ Mat get_texture_channel(const Mat & img, int num_textures, int kmeans_attempts){
 Mat get_4_channels(const Mat & img, int num_textures){
 	Mat imgLab(img.rows, img.cols, CV_64FC3);
 	// convert to L*a*b space for first 3 channels
-	printf("getting Lab colors\n");
+	cout << "getting Lab colors\n" << endl;
 	cvtColor(img, imgLab, CV_RGB2Lab);
 	// get last channel: texture
-	printf("getting texture channel\n");
+	cout << "getting texture channel\n" << endl;
 	Mat tex = get_texture_channel(img, num_textures);
 	
-	printf("building 4-channel matrix\n");
+	cout << "building 4-channel matrix\n" << endl;
 	Mat * splits = new Mat[4];
 	split(imgLab, splits);
 	splits[3] = tex;
@@ -234,23 +237,23 @@ Mat get_1D_texture_vector(const Mat & img){
 						
 	Mat img17d = apply_all_filters(img, kernels, NUM_TEX_FILTERS);
 	
-	//printf("img17d is %d x %d with ch = %d\n", img17d.rows, img17d.cols, img17d.channels());
+	//cout << "img17d is %d x %d with ch = %d\n", img17d.rows, img17d.cols, img17d.channels());
 	
 	// convert the 17 2D matrices to a single Nx17 matrix
-	printf("creating Nx17 vector for kmeans\n");
+	cout << "creating Nx17 vector for kmeans\n" << endl;
 	
 	Mat ret = img17d.reshape(1, img17d.rows*img17d.cols);
 	ret.convertTo(ret, CV_32F);
 	
-	//printf("ret is %d x %d with ch = %d\n", ret.rows, ret.cols, ret.channels());
+	//cout << "ret is %d x %d with ch = %d\n", ret.rows, ret.cols, ret.channels());
 	
-	// printf("type of ret is %d. CV_32F is %d\n", ret.type() , CV_32F);
+	// cout << "type of ret is %d. CV_32F is %d\n", ret.type() , CV_32F);
 	
-	printf("vector created.\n");
+	cout << "vector created.\n" << endl;
 	return ret;
 }
 
-void disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness){
+Mat disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness, bool window){
 	
 	int w = imgs[0].cols;
 	int h = imgs[0].rows;
@@ -267,14 +270,19 @@ void disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness){
 		}
 	}
 	
-	//printf("depth is %d\t 32F is %d\n", block_img.depth(), CV_32F);
+	//cout << "depth is %d\t 32F is %d\n", block_img.depth(), CV_32F);
 	char * name;
-	sprintf(name, "%d channel image", rows*cols);
+	const char * fmt = std::string("%d channel image").c_str();
+	sprintf(name, fmt, rows*cols);
 	
-	namedWindow(name);
-	imshow(name, block_img);
-	waitKey(0);
-	destroyWindow(name);
+	if(window){
+		namedWindow(name);
+		imshow(name, block_img);
+		waitKey(0);
+		destroyWindow(name);
+	}
+
+	return block_img;
 }
 
 // thanks to http://stackoverflow.com/questions/2289690/opencv-how-to-rotate-iplimage
@@ -293,19 +301,21 @@ Mat get_blur_filter(int width){
 	return ret;
 }
 
-int seg_exec(int argc, char** argv){
-	printf("reading image\n");
-	Mat img = imread("/Users/Richard/Documents/_CLASSES/thesis/code/optic flow/test data/bakerlibrary.jpg", 1);
+int seg_exec(std::string file_in, std::string file_out, bool disp){
+	cout << "reading image" << endl;
+	Mat img = imread(file_in, 1);
 	
 	Mat four_channel = get_4_channels(img);
 	
 	Mat * chs = new Mat[4];
 	split(four_channel, chs);
 	double brightness [] = {1/255.0, 1/255.0, 1/255.0, 1/40.0};
-	disp_n_imgs(chs, 2, 2, brightness);
+	Mat result = disp_n_imgs(chs, 2, 2, brightness, disp);
 	
+	imwrite(file_out, result);
+
 	// TODO - oriented histograms?
-	free(chs);
-	printf("DONE\n");
+	delete[] chs;
+	cout << "DONE" << endl;
 	return 0;
 }

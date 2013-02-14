@@ -57,4 +57,4 @@ private:
 };
 
 // driver function
-int feat_exec(int argc, char** argv);
+int feat_exec(std::string file_in, std::string file_out, bool disp);

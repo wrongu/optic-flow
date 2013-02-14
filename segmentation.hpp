@@ -24,4 +24,4 @@ Mat rotateImage(const Mat& source, double angle);
 Mat get_blur_filter(int width);
 
 // driver function
-int seg_exec(int argc, char** argv);
+int seg_exec(std::string file_in, std::string file_out, bool disp);

@@ -136,35 +136,13 @@ Mat_<vec_d> HOG_get_full_descriptors(const Mat & img, int radius, const of::Spar
 	return descriptors;
 }
 
-void parse_opt(char* opt_string, bool & vis_flag, std::string & out_file){
-	if(opt_string[0] != '-') return;
-	switch(opt_string[1]){
-	case 'h':
-		vis_flag = false;
-		break;
-	case 'o':
-		out_file = &(opt_string[2]);
-		break;
-	}
-}
-
 // TEST DRIVER
-int feat_exec(int argc, char** argv){
+int feat_exec(std::string file_in, std::string file_out, bool disp){
 	cout << "feat_exec entered" << endl;
-
-	bool disp_output = true;
-
-	std::string f = "images/bakerlibrary.jpg";
-	std::string out_file = "output/result.jpg";
-	if(argc > 1)
-		f = argv[1];
-	for(int i=2; i < argc; ++i)
-		parse_opt(argv[i], disp_output, out_file);
-
-	Mat img = imread(f,1);
+	Mat img = imread(file_in, 1);
 
 	if(!img.data){
-		std::cerr << "Problem loading image: " << f << endl;
+		std::cerr << "Problem loading image: " << file_in << endl;
 		return 1;
 	}
 
@@ -203,7 +181,7 @@ int feat_exec(int argc, char** argv){
 
 	Mat overlay = of::overlay_field(img, flow_field);
 
-	if(disp_output){
+	if(disp){
 		std::string title ="Optic Flow Visualization";
 		namedWindow(title);
 		imshow(title, overlay);
@@ -212,7 +190,7 @@ int feat_exec(int argc, char** argv){
 	}
 
 	// SAVE FILE
-	imwrite(out_file, overlay);
+	imwrite(file_out, overlay);
 
 	cout << "--done--" << endl;
 
