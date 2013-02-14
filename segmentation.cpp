@@ -127,7 +127,7 @@ Mat get_center_difference_filter(int m_width, double sigma, double sample_radius
 	
 	double n = fine * m_width;
 	double root2 = 1.415;
-	vec_d domain_fine = linspace(-sample_radius*root2, sample_radius*root2, n);
+	vec_d domain_fine = linspace(-sample_radius*root2, sample_radius*root2, (int)n);
 	vec_d domain = linspace(-sample_radius, sample_radius, m_width);
 	
 	// square sigma values here to reduce multiplications
@@ -165,7 +165,7 @@ Mat get_texture_channel(const Mat & img, int num_textures, int kmeans_attempts){
 	Mat labels;
 	// sample code thanks to http://stackoverflow.com/questions/10240912/input-matrix-to-opencv-kmeans-clustering
 	cout << "running kmeans" << endl;
-	kmeans(text_vec, num_textures, labels, TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 0.0001, 10000), 
+	kmeans(text_vec, num_textures, labels, TermCriteria(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 100000, .0001), 
 			kmeans_attempts, KMEANS_PP_CENTERS);
 	cout << "kmeans done" << endl;
 	
@@ -201,7 +201,7 @@ Mat get_4_channels(const Mat & img, int num_textures){
 	
 	Mat ret(img.cols, img.rows, CV_64F);
 	merge(splits, 4, ret);
-	free(splits);
+	delete[] splits;
 	return ret;
 }
 
@@ -271,11 +271,10 @@ Mat disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness, bool 
 	}
 	
 	//cout << "depth is %d\t 32F is %d\n", block_img.depth(), CV_32F);
-	char * name;
-	const char * fmt = std::string("%d channel image").c_str();
-	sprintf(name, fmt, rows*cols);
-	
 	if(window){
+		char * name;
+		sprintf(name, "%d channel image", rows*cols);
+	
 		namedWindow(name);
 		imshow(name, block_img);
 		waitKey(0);
