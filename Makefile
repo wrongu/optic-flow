@@ -22,7 +22,6 @@ EXECUTABLE = _run
 -include $(OBJS:.o=.d)
 
 all: $(EXECUTABLE)
-.PHONY: all
 
 $(EXECUTABLE): LIBPATH $(OBJS)
 	$(CC) $(C_FLAGS) $(OBJS) $(LIBS) -o $(EXECUTABLE)

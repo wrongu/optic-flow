@@ -22,21 +22,16 @@ PARSE_CONTEXT parse_opt(char* str, options & opts, PARSE_CONTEXT ctx = NONE){
 	switch(ctx){
 	case OUTPUT:
 		opts.file_out = str;
-		std::cout << "set output file to " << opts.file_out << std::endl;
 		return NONE;
 	case INPUT:
 		opts.file_in = str;
-		std::cout << "set input file to " << opts.file_out << std::endl;
 		return NONE;
 	case ALGORITHM:
-		std::cout << "setting algorithm option" << std::endl;
 		switch(str[0]){
 			case 'f':
-				std::cout << "set algo to features" << std::endl;
 				opts.algorithm = FEATURES;
 				break;
 			case 's':
-				std::cout << "set algo to segmentation" << std::endl;
 				opts.algorithm = SEGMENTATION;
 				break;
 		}
@@ -63,31 +58,23 @@ PARSE_CONTEXT parse_opt(char* str, options & opts, PARSE_CONTEXT ctx = NONE){
 		//	--s specify segmentation test
 		switch(str[1]){
 		case 'o':
-			std::cout << "set ctx to output" << std::endl;
 			return OUTPUT;
 		case 'f':
-			std::cout << "set ctx to input" << std::endl;
 			return INPUT;
 		case 'a':
-			std::cout << "set ctx to algorithm" << std::endl;
 			return ALGORITHM;
 		case 'v':
-			std::cout << "set disp to true" << std::endl;
 			opts.display = true;
 			break;
 		case 'h':
-			std::cout << "set disp to false" << std::endl;
 			opts.display = false;
 			break;
 		case '-':
-			std::cout << "double option" << std::endl;
 			switch(str[2]){
 			case 'f':
-				std::cout << "set algo to features" << std::endl;
 				opts.algorithm = FEATURES;
 				break;
 			case 's':
-				std::cout << "set algo to segmentation" << std::endl;
 				opts.algorithm = SEGMENTATION;
 				break;
 			}
@@ -112,7 +99,7 @@ int main(int argc, char** argv){
 	if(o.file_in == "")  o.file_in = default_file_in;
 	if(o.file_out == "") o.file_out = default_file_out;
 
-	// run the aglorithm
+	// run the algorithm
 	switch(o.algorithm){
 	case FEATURES:
 		return feat_exec(o.file_in, o.file_out, o.display);
