@@ -275,7 +275,6 @@ Mat disp_n_imgs(const Mat * imgs, int rows, int cols, double * brightness, bool 
 		}
 	}
 	
-	//cout << "depth is %d\t 32F is %d\n", block_img.depth(), CV_32F);
 	if(window){
 		char name[32];
 		sprintf(name, "%d channels separated", n);

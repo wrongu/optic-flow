@@ -21,7 +21,8 @@ EXECUTABLE = _run
 
 -include $(OBJS:.o=.d)
 
-all: $(EXECUTABLE)
+all:
+	@make $(EXECUTABLE)
 
 $(EXECUTABLE): LIBPATH $(OBJS)
 	@echo 'building $(EXECUTABLE)'

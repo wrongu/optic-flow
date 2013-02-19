@@ -50,19 +50,20 @@ namespace of{
 		delete[] scales2;
 	}
 
-	void best_descriptor_match(const Mat_<vec_d> & desc1, const Mat_<vec_d> & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){
+	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){
+		std::cout << "entered best_descriptor_match" << std::endl;
 		for(int r=0; r<desc1.rows; ++r){
 			std::cout << "desc. match row " << r << " of " << desc1.rows << std::endl;
 			for(int c=0; c<desc1.cols; ++c){
-				vec_d current_vec = desc1(r,c);
+				lg_feat_vec_t current_vec = desc1.at<lg_feat_vec_t>(r,c);
 				int orig_r = sp1.sparse2Dense(r);
 				int orig_c = sp1.sparse2Dense(c);
 				// find best match in desc2
 				int best_r = 0, best_c = 0;
-				double best_dist = sq_dist(current_vec, desc2(0, 0));
+				double best_dist = sq_dist<FEAT_TYPE, LG_FEAT_SIZE>(current_vec, desc2.at<lg_feat_vec_t>(0, 0));
 				for(int i=0; i<desc2.rows; ++i){
 					for(int j=0; j<desc2.cols; ++j){
-						double next_dist = sq_dist(current_vec, desc2(i, j));
+						double next_dist = sq_dist<FEAT_TYPE, LG_FEAT_SIZE>(current_vec, desc2.at<lg_feat_vec_t>(i, j));
 						if(next_dist < best_dist){
 							best_dist = next_dist;
 							best_r = i;
@@ -74,9 +75,9 @@ namespace of{
 				//	to destination matrix
 				int r_diff = sp2.sparse2Dense(best_r) - orig_r;
 				int c_diff = sp2.sparse2Dense(best_c) - orig_c;
-				// using Vec2s because dst was defined with type CV_16UC2
-				dst.at<Vec2s>(orig_r, orig_c)[0] = r_diff;
-				dst.at<Vec2s>(orig_r, orig_c)[1] = c_diff;
+				// using Vec2f because dst was defined with type CV_32FC2
+				dst.at<Vec2f>(orig_r, orig_c)[0] = (float) r_diff;
+				dst.at<Vec2f>(orig_r, orig_c)[1] = (float) c_diff;
 				std::cout << orig_r << ", " << orig_c << " best match: " << sp2.sparse2Dense(best_r) << ", " << sp2.sparse2Dense(best_c) << std::endl;
 			}
 		}

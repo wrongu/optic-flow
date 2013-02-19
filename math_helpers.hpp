@@ -8,6 +8,7 @@
 using namespace cv;
 
 typedef std::vector<double> vec_d;
+typedef std::vector<float> vec_f;
 typedef vec_d::size_type _int;
 typedef vec_d::iterator _iter;
 
@@ -26,7 +27,8 @@ double sample_func(vec_d domain, vec_d f, double x, _int i=1, _int j=0);
 double linear_sample_func(vec_d domain, vec_d f, double x);
 
 // squared euclidean distance between two vectors of the same size
-double sq_dist(vec_d v1, vec_d v2);
+template <typename _Tp, int n>
+double sq_dist(Vec<_Tp, n> v1, Vec<_Tp, n> v2);
 
 void print_vec(double *vec, int n);
 

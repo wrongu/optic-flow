@@ -64,14 +64,12 @@ double linear_sample_func(vec_d domain, vec_d f, double x){
 	return f[index];
 }
 
-double sq_dist(vec_d v1, vec_d v2){
-	if(v1.size() != v2.size()) return inf;
+template <typename _Tp, int n>
+double sq_dist(Vec<_Tp, n> v1, Vec<_Tp, n> v2){
 	double dist = 0.0;
-	vec_d::iterator it1 = v1.begin();
-	vec_d::iterator it2 = v2.begin();
-	while(it1 != v1.end()){
-		dist += (*it1 - *it2) * (*it1 - *it2);
-		++it1; ++it2;
+	for(int i=0; i<v1.channels; ++i){
+		double diff = v2[i] - v1[i];
+		dist += diff * diff;
 	}
 	return dist;
 }
