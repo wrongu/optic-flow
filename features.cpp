@@ -41,49 +41,54 @@ void HOGFeature::initialize(){
 
 // Input: (r,c) from dense image
 // Output: vec_d feature of nearest (floored) location in the sparse feature matrix
-vec_d HOGFeature::get_feature_at(int r, int c, bool index_is_sparse) const
+const vec_d & HOGFeature::get_feature_at(int r, int c, bool index_is_sparse) const
 {
+
+//	cout << "precomputed's has size " << precomputed.rows << " x " << precomputed.cols << endl;
+//	cout << "indices: (" << r << ", " << c << ") ";
 	if(!index_is_sparse){
 		r = sampler.dense2Sparse(r);
 		c = sampler.dense2Sparse(c);
 	}
-
+//	cout << "sparse indices(" << r << ", " << c << ")\t";
 	r = borderInterpolate(r, precomputed.rows, BORDER_REPLICATE);
 	c = borderInterpolate(c, precomputed.cols, BORDER_REPLICATE);
-
-	// cout << "precomputed's has size " << precomputed.rows << " x " << precomputed.cols << endl;
-	// cout << "getting precomputed.at(" << r << ", " << c << ")" << endl;
+	cout << "at(" << r << ", " << c << ")" << endl;
 	return precomputed(r, c);
 }
 
 vec_d HOGFeature::eval(int r, int c, int BORDER)
 {
 	vec_d feature;
-	feature.reserve(n_gradients);
+	feature.resize(n_gradients, 0.0);
 	// loop over each gaussian derivative filter
 	for(int i=0; i<n_gradients; i++){
 		// loop over local region in image for convolution
 		for(int x=0; x<2*size+1; ++x){
+			int sample_c = borderInterpolate(c-size+x, src.cols, BORDER);
 			for(int y=0; y<2*size+1; ++y){
 				int sample_r = borderInterpolate(r-size+y, src.rows, BORDER);
-				int sample_c = borderInterpolate(c-size+x, src.cols, BORDER);
 				// average values across image channels
 				double sum_on_channels = 0.0;
 				for(int ch=0; ch < src.channels(); ch++){
 					double im_val = src.at<Vec3b>(sample_r, sample_c)[ch];
 					sum_on_channels += im_val * gradient_filters[i].at<double>(y, x);
 				}
-				feature[i] += sum_on_channels / src.channels();
+				feature[i] += sum_on_channels / (double) src.channels();
 			}
 		}
+	}
+	if(feature.size() != n_gradients){
+		cout << "eval failed at (r, c) = (" << r << ", " << c << ")" << endl;
+		exit(1);
 	}
 	return feature;
 }
 
 void HOGFeature::sparseFilter2D(Mat_<vec_d> & dst){
 	cout << "entered sparseFilter2D" << endl;
-	int sparseCols = sampler.dense2Sparse(src.cols),
-			sparseRows = sampler.dense2Sparse(src.rows);
+	int sparseCols = sampler.dense2Sparse(src.cols) - 1,
+			sparseRows = sampler.dense2Sparse(src.rows) - 1;
 
 	// sparse coordinates (r,c)
 	for(int r=0; r<sparseRows; ++r){
@@ -108,18 +113,20 @@ Mat_<vec_d> HOG_get_full_descriptors(const Mat & img, int radius, const of::Spar
 	int sparse_rows = img.rows / sampler.spacing;
 	int sparse_cols = img.cols / sampler.spacing;
 	Mat_<vec_d> descriptors(sparse_rows, sparse_cols);
+	int step = 4 / sampler.spacing;
+	step = step == 0 ? 1 : step;
 	for(int r=0; r<sparse_rows; ++r){
 		for(int c=0; c<sparse_cols; ++c){
 			vec_d full_descriptor = feats.get_feature_at(r, c, true);
 			// append 8 surrounding neighbor features (named by directions NSEW)
-			vec_d N  = feats.get_feature_at(r-1, c, true);
-			vec_d NE = feats.get_feature_at(r-1, c+1, true);
-			vec_d E  = feats.get_feature_at(r, c+1, true);
-			vec_d SE = feats.get_feature_at(r+1, c+1, true);
-			vec_d S  = feats.get_feature_at(r+1, c, true);
-			vec_d SW = feats.get_feature_at(r+1, c-1, true);
-			vec_d W  = feats.get_feature_at(r, c-1, true);
-			vec_d NW = feats.get_feature_at(r-1, c-1, true);
+			const vec_d & N  = feats.get_feature_at(r-step, c, true);
+			const vec_d & NE = feats.get_feature_at(r-step, c+step, true);
+			const vec_d & E  = feats.get_feature_at(r, c+step, true);
+			const vec_d & SE = feats.get_feature_at(r+step, c+step, true);
+			const vec_d & S  = feats.get_feature_at(r+step, c, true);
+			const vec_d & SW = feats.get_feature_at(r+step, c-step, true);
+			const vec_d & W  = feats.get_feature_at(r, c-step, true);
+			const vec_d & NW = feats.get_feature_at(r-step, c-step, true);
 			full_descriptor.insert(full_descriptor.end(), N.begin(),  N.end());
 			full_descriptor.insert(full_descriptor.end(), NE.begin(), NE.end());
 			full_descriptor.insert(full_descriptor.end(), E.begin(),  E.end());
@@ -140,6 +147,7 @@ Mat_<vec_d> HOG_get_full_descriptors(const Mat & img, int radius, const of::Spar
 int feat_exec(std::string file_in, std::string file_out, bool disp){
 	cout << "feat_exec entered" << endl;
 	Mat img = imread(file_in, 1);
+	img.convertTo(img, CV_32FC3);
 
 	if(!img.data){
 		std::cerr << "Problem loading image: " << file_in << endl;

@@ -21,10 +21,10 @@ namespace of{
 	class SparseSample{
 	public:
 		SparseSample(int _spacing = 1, int _offset = 0) : spacing(_spacing), offset(_offset) {}
-		int spacing;
-		int offset;
 		inline int dense2Sparse(int coord) const { return (coord-offset) / spacing; }
 		inline int sparse2Dense(int coord) const { return coord * spacing + offset; }
+		int spacing;
+		int offset;
 	};
 
 	const SparseSample NO_SPARSE;

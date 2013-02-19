@@ -13,10 +13,12 @@ namespace of{
 	// 	this is an implementation of the algorithm outlined in "Large Displacement Optical Flow: Descriptor Matching in Variational Motion Estimation"
 	//	dst should be of type CV_32FC2
 	//		channel 0 is the row/vertical component of OF; channel 1 is column/horizontal
+	//		*initialize dst to all 0s*
 	//  img1 and img2 can be any type as long as they are the same.
 	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max, double gamma, double alpha, double beta, int MAX_ITER, double eps){
 		Mat *scales1 = new Mat[k_max+1];
 		Mat *scales2 = new Mat[k_max+1];
+		Mat & w = dst; // the paper refers to the optic flow field as 'w', so here I alias it as such
 		// This loop constructs multiple scales of the image such that
 		//	scales[0] contains the lowest resolution and
 		//	scales[k_max] contains the highest resolution
@@ -35,19 +37,29 @@ namespace of{
 		// ===================
 		// CONTINUATION METHOD
 		// ===================
+		Mat Iz, Ix, Iy, Ixz, Iyz, Ixx, Iyy, Ixy;
+		Mat psi1, psi2, psi3, psi4;
 		// loop over image scales, coarse to fine
 		for(int k=0; k<=k_max; ++k){
-			// 'delta' is our distance from the fixed point solution. break when it is within 'eps' of correct
+			Mat im1 = scales1[k];
+			Mat im2 = scales2[k];
+			// Fixed-point iteration 'constants' and pre-evaluated functions:
+			Iz = im2(w) - im1;
+			// 'delta_max' is our max change between iterations. break when it is within 'eps' of 0
 			//	initialized to eps to ensure that the loop is entered
-			double delta = eps;
+			double delta_max = eps;
 			// fixed point iteration loop: loop until convergence (specified by 'eps') or max iterations
-			for(int l=0; l < MAX_ITER && delta >= eps; ++l){
+			for(int l=0; l < MAX_ITER && delta_max >= eps; ++l){
 
 			}
 		}
 		// TODO - final iteration with beta set to 0 to approximate the continuous limit
 		delete[] scales1;
 		delete[] scales2;
+	}
+
+	float psi_prime(float s_2, float eps_2){
+		return 1.0f / (2.0f * sqrt(s_2 + eps_2));
 	}
 
 	void best_descriptor_match(const Mat_<vec_d> & desc1, const Mat_<vec_d> & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){

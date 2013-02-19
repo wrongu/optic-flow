@@ -32,7 +32,7 @@ public:
 	CustomFeature(const Mat & img, int sz, const of::SparseSample & ss) : src(img), size(sz), sampler(ss){}
     virtual ~CustomFeature() {}
     // set to 0 makes it strictly virtual (only in subclasses)
-    virtual vec_d get_feature_at(int r, int c, bool index_is_sparse = false) const = 0;
+    const virtual vec_d & get_feature_at(int r, int c, bool index_is_sparse = false) const = 0;
     virtual vec_d eval(int r, int c, int BORDER = BORDER_DEFAULT) = 0;
     virtual void sparseFilter2D(Mat_<vec_d> & dst) = 0;
 protected:
@@ -47,7 +47,7 @@ class HOGFeature : public CustomFeature
 public:
 	HOGFeature(const Mat & img, int radius, const of::SparseSample & ss, int n = 15);
 	~HOGFeature();
-	vec_d get_feature_at(int r, int c, bool index_is_sparse = false) const;
+	const vec_d & get_feature_at(int r, int c, bool index_is_sparse = false) const;
     vec_d eval(int r, int c, int BORDER = BORDER_DEFAULT);
     void sparseFilter2D(Mat_<vec_d> & dst);
 private:
