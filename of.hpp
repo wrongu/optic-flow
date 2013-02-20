@@ -37,6 +37,8 @@ namespace of{
 	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max=4, double gamma=1.0, double alpha=1.0, double beta=1.0, int MAX_ITER = 1000, double eps = 0.00001);
 	Mat overlay_field(const Mat & src, const Mat & flow_field);
 	Vec3d HSV2BGR(Vec3d hsv);
+	template <typename im_vec_t, typename vec_t>
+		void flow_transform(const Mat & src, Mat & dst, const Mat & vec_field);
 
 }
 

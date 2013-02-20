@@ -37,22 +37,33 @@ namespace of{
 		// ===================
 		// CONTINUATION METHOD
 		// ===================
-		Mat Iz, Ix, Iy, Ixz, Iyz, Ixx, Iyy, Ixy;
+		Mat img2_offset, Iz, Ix, Iy, Ixz, Iyz, Ixx, Iyy, Ixy;
 		Mat psi1, psi2, psi3, psi4;
 		// TODO - reduce this function to just the iteration. Let all initialization be done in the calling functions
 		//	to save time when processing live video
+		// TODO - gpu::createDerivFilter_GPU for parallel filtering
 		Ptr<FilterEngine> dx  = createDerivFilter(CV_32F, CV_32F, 1, 0, 3);
 		Ptr<FilterEngine> dy  = createDerivFilter(CV_32F, CV_32F, 0, 1, 3);
 		Ptr<FilterEngine> dxx = createDerivFilter(CV_32F, CV_32F, 2, 0, 3);
 		Ptr<FilterEngine> dyy = createDerivFilter(CV_32F, CV_32F, 0, 2, 3);
 		Ptr<FilterEngine> dxy = createDerivFilter(CV_32F, CV_32F, 1, 1, 3);
-
+		// img2_offest = img2(x + w)
 		// loop over image scales, coarse to fine
 		for(int k=0; k<=k_max; ++k){
 			Mat im1 = scales1[k];
 			Mat im2 = scales2[k];
+			Mat im2_sampled(im1.rows, im1.cols, im1.type());
+			Mat dw(im1.rows, im1.cols, w.type()); // dw is used for the update: w(k+1) = w(k) + dw(k)
+			flow_transform<Vec3f, Vec2f>(im2, im2_sampled, w);
 			// Fixed-point iteration 'constants' and pre-evaluated functions:
-			Iz = im2(w) - im1;
+			Iz = im2_sampled - im1;
+			(*dx).apply(im2_sampled, Ix);
+			(*dy).apply(im2_sampled, Iy);
+			(*dxx).apply(im2_sampled, Ixx);
+			(*dyy).apply(im2_sampled, Iyy);
+			(*dxy).apply(im2_sampled, Ixy);
+			(*dx).apply(Iz, Ixz);
+			(*dy).apply(Iz, Iyz);
 			// 'delta_max' is our max change between iterations. break when it is within 'eps' of 0
 			//	initialized to eps to ensure that the loop is entered
 			double delta_max = eps;
@@ -64,6 +75,20 @@ namespace of{
 		// TODO - final iteration with beta set to 0 to approximate the continuous limit
 		delete[] scales1;
 		delete[] scales2;
+	}
+
+	// dst(r,c) <- src(r + u(r,c), c + v(r,c))
+	//	where vec_field(r,c) = (u, v)
+	template <typename im_vec_t, typename vec_t>
+	void flow_transform(const Mat & src, Mat & dst, const Mat & vec_field){
+		dst = src.clone();
+		for(int r=0; r<src.rows; ++r){
+			for(int c=0; c<src.cols; ++c){
+				int sample_r = borderInterpolate(r + vec_field.at<vec_t>(r, c)[0], src.rows, BORDER_DEFAULT);
+				int sample_c = borderInterpolate(c + vec_field.at<vec_t>(r, c)[1], src.cols, BORDER_DEFAULT);
+				dst.at<im_vec_t>(r,c) = src.at<im_vec_t>(sample_r, sample_c);
+			}
+		}
 	}
 
 	float psi_prime(float s_2, float eps_2){
@@ -205,7 +230,7 @@ int of_exec(std::string file_in, std::string file_out, bool disp){
 	// compute descriptors of second "frame" at each pixel
 	Mat HOG_descriptors2 = HOG_get_full_descriptors(img_rotated, 3, ss2);
 
-	cout << "holy crap descriptors worked. computing OF initialization. " << endl;
+	cout << "computing OF initialization. " << endl;
 
 	Mat flow_field(img.rows, img.cols, CV_32FC2);
 	of::best_descriptor_match(HOG_descriptors, HOG_descriptors2, flow_field, ss1, ss2);
