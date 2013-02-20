@@ -50,6 +50,8 @@ namespace of{
 //		Ptr<BaseRowFilter> dxx = getLinearRowFilter   (CV_32F, CV_32F, dxx_mat, -1, getKernelType(dxx_mat, Point(-1, -1)));
 //		Ptr<BaseRowFilter> dyy = getLinearColumnFilter(CV_32F, CV_32F, dyy_mat, -1, getKernelType(dyy_mat, Point(-1, -1)));
 //		Ptr<BaseRowFilter> dxy = createLinearFilter   (CV_32F, CV_32F, dxy_mat);
+		// TODO - reduce this function to just the iteration. Let all initialization be done in the calling functions
+		//	to save time when processing live video
 		Ptr<FilterEngine> dx  = createDerivFilter(CV_32F, CV_32F, 1, 0, 3);
 		Ptr<FilterEngine> dy  = createDerivFilter(CV_32F, CV_32F, 0, 1, 3);
 		Ptr<FilterEngine> dxx = createDerivFilter(CV_32F, CV_32F, 2, 0, 3);
