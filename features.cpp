@@ -191,7 +191,7 @@ Mat HOG_get_full_descriptors(const Mat & img, int radius, const of::SparseSample
 	return descriptors;
 }
 
-// thanks to stackoverflow:
+// thanks to stack overflow for int --> type name:
 // http://stackoverflow.com/questions/12335663/getting-enum-names-e-g-cv-32fc1-of-opencv-image-types
 std::string getImageType(int number)
 {
@@ -233,72 +233,4 @@ std::string getImageType(int number)
     type<<"CV_"<<imgTypeString<<"C"<<channel;
 
     return type.str();
-}
-
-// TEST DRIVER
-int feat_exec(std::string file_in, std::string file_out, bool disp){
-	cout << "feat_exec entered" << endl;
-	Mat img = imread(file_in, 1);
-
-	if(!img.data){
-		std::cerr << "Problem loading image: " << file_in << endl;
-		return 1;
-	}
-//	cout << "img read. has depth " << getImageType(img.depth()) << endl;
-//	cout << "img read. has type " << getImageType(img.type()) << endl;
-	img.convertTo(img, CV_FEAT(3));
-//	cout << "img converted to floating pt" << endl;
-//	cout << "img read. has depth " << getImageType(img.depth()) << endl;
-//	cout << "img read. has type " << getImageType(img.type()) << endl;
-
-	// testing optic flow on img and rotated img:
-	Mat rot_matrix = getRotationMatrix2D(Point2f(img.rows/2, img.cols/2), 3.0, 1.0);
-	Mat img_rotated(img.rows, img.cols, img.type());
-	warpAffine(img, img_rotated, rot_matrix, img_rotated.size());
-	img_rotated.convertTo(img_rotated, CV_FEAT(3));
-
-	/*
-	// Test image rotation (works)
-	if(disp_output){
-		namedWindow("original");
-		namedWindow("rotated");
-		imshow("original", img);
-		imshow("rotated", img_rotated);
-		waitKey(0);
-		destroyWindow("original");
-		destroyWindow("rotated");
-	}
-	 */
-
-	cout << "image read. creating HOGFeature descriptors." << endl;
-	of::SparseSample ss1(4, 0);
-	of::SparseSample ss2(1, 0);
-	// compute descriptors of first "frame" sparsely
-	Mat HOG_descriptors = HOG_get_full_descriptors(img, 3, ss1);
-	// compute descriptors of second "frame" at each pixel
-	Mat HOG_descriptors2 = HOG_get_full_descriptors(img_rotated, 3, ss2);
-
-	cout << "holy crap descriptors worked. computing OF initialization. " << endl;
-
-	Mat flow_field(img.rows, img.cols, CV_32FC2);
-	of::best_descriptor_match(HOG_descriptors, HOG_descriptors2, flow_field, ss1, ss2);
-
-	cout << "created descriptors.\nmaking overlay image" << endl;
-
-	Mat overlay = of::overlay_field(img, flow_field);
-
-	if(disp){
-		std::string title ="Optic Flow Visualization";
-		namedWindow(title);
-		imshow(title, overlay);
-		waitKey(0);
-		destroyWindow(title);
-	}
-
-	// SAVE FILE
-	imwrite(file_out, overlay);
-
-	cout << "--done--" << endl;
-
-	return 0;
 }

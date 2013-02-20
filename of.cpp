@@ -35,6 +35,26 @@ namespace of{
 		// ===================
 		// CONTINUATION METHOD
 		// ===================
+		// finite difference operators as convolution kernels, thanks to
+		//	http://en.wikipedia.org/wiki/Finite_difference#Finite_difference_in_several_variables
+//		Mat dx_mat = (Mat_<float>(1, 3) << 0.5, 0, 0.5); // 1 row x 3 col
+//		Mat dy_mat = (Mat_<float>(3, 1) << 0.5, 0, 0.5); // 3 row x 1 col, but otherwise the same
+//		Mat dxx_mat = (Mat_<float>(1, 3) << 1.0, -2.0, 1.0); // 2nd order center difference on x
+//		Mat dyy_mat = (Mat_<float>(3, 1) << 1.0, -2.0, 1.0); // 2nd order center difference on y
+//		Mat dxy_mat = (Mat_<float>(3, 3) << 1.0f, 0.0f,-1.0f,
+//											0.0f, 0.0f, 0.0f,
+//										   -1.0f, 0.0f, 1.0f) / 4.0f; // 2nd order cross xy
+//
+//		Ptr<BaseRowFilter> dx  = getLinearRowFilter   (CV_32F, CV_32F, dx_mat, -1, KERNEL_SMOOTH | KERNEL_SYMMETRICAL);
+//		Ptr<BaseRowFilter> dy  = getLinearColumnFilter(CV_32F, CV_32F, dy_mat, -1, KERNEL_SMOOTH | KERNEL_SYMMETRICAL);
+//		Ptr<BaseRowFilter> dxx = getLinearRowFilter   (CV_32F, CV_32F, dxx_mat, -1, getKernelType(dxx_mat, Point(-1, -1)));
+//		Ptr<BaseRowFilter> dyy = getLinearColumnFilter(CV_32F, CV_32F, dyy_mat, -1, getKernelType(dyy_mat, Point(-1, -1)));
+//		Ptr<BaseRowFilter> dxy = createLinearFilter   (CV_32F, CV_32F, dxy_mat);
+		Ptr<FilterEngine> dx  = createDerivFilter(CV_32F, CV_32F, 1, 0, 3);
+		Ptr<FilterEngine> dy  = createDerivFilter(CV_32F, CV_32F, 0, 1, 3);
+		Ptr<FilterEngine> dxx = createDerivFilter(CV_32F, CV_32F, 2, 0, 3);
+		Ptr<FilterEngine> dyy = createDerivFilter(CV_32F, CV_32F, 0, 2, 3);
+		Ptr<FilterEngine> dxy = createDerivFilter(CV_32F, CV_32F, 1, 1, 3);
 		// loop over image scales, coarse to fine
 		for(int k=0; k<=k_max; ++k){
 			// 'delta' is our distance from the fixed point solution. break when it is within 'eps' of correct
@@ -48,6 +68,17 @@ namespace of{
 		// TODO - final iteration with beta set to 0 to approximate the continuous limit
 		delete[] scales1;
 		delete[] scales2;
+	}
+
+	// TODO - move this back to math_helpers and figure out how to get it to still compile
+	template <typename _Tp, int n>
+	double sq_dist(Vec<_Tp, n> v1, Vec<_Tp, n> v2){
+		double dist = 0.0;
+		for(int i=0; i < n; ++i){
+			double diff = v2[i] - v1[i];
+			dist += diff * diff;
+		}
+		return dist;
 	}
 
 	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){
@@ -128,4 +159,73 @@ namespace of{
 		else
 			return Scalar(chroma + m, m, x + m);
 	}
+}
+
+
+// TEST DRIVER
+int of_exec(std::string file_in, std::string file_out, bool disp){
+	cout << "feat_exec entered" << endl;
+	Mat img = imread(file_in, 1);
+
+	if(!img.data){
+		std::cerr << "Problem loading image: " << file_in << endl;
+		return 1;
+	}
+//	cout << "img read. has depth " << getImageType(img.depth()) << endl;
+//	cout << "img read. has type " << getImageType(img.type()) << endl;
+	img.convertTo(img, CV_FEAT(3));
+//	cout << "img converted to floating pt" << endl;
+//	cout << "img read. has depth " << getImageType(img.depth()) << endl;
+//	cout << "img read. has type " << getImageType(img.type()) << endl;
+
+	// testing optic flow on img and rotated img:
+	Mat rot_matrix = getRotationMatrix2D(Point2f(img.rows/2, img.cols/2), 3.0, 1.0);
+	Mat img_rotated(img.rows, img.cols, img.type());
+	warpAffine(img, img_rotated, rot_matrix, img_rotated.size());
+	img_rotated.convertTo(img_rotated, CV_FEAT(3));
+
+	/*
+	// Test image rotation (works)
+	if(disp_output){
+		namedWindow("original");
+		namedWindow("rotated");
+		imshow("original", img);
+		imshow("rotated", img_rotated);
+		waitKey(0);
+		destroyWindow("original");
+		destroyWindow("rotated");
+	}
+	 */
+
+	cout << "image read. creating HOGFeature descriptors." << endl;
+	of::SparseSample ss1(4, 0);
+	of::SparseSample ss2(1, 0);
+	// compute descriptors of first "frame" sparsely
+	Mat HOG_descriptors = HOG_get_full_descriptors(img, 3, ss1);
+	// compute descriptors of second "frame" at each pixel
+	Mat HOG_descriptors2 = HOG_get_full_descriptors(img_rotated, 3, ss2);
+
+	cout << "holy crap descriptors worked. computing OF initialization. " << endl;
+
+	Mat flow_field(img.rows, img.cols, CV_32FC2);
+	of::best_descriptor_match(HOG_descriptors, HOG_descriptors2, flow_field, ss1, ss2);
+
+	cout << "created descriptors.\nmaking overlay image" << endl;
+
+	Mat overlay = of::overlay_field(img, flow_field);
+
+	if(disp){
+		std::string title ="Optic Flow Visualization";
+		namedWindow(title);
+		imshow(title, overlay);
+		waitKey(0);
+		destroyWindow(title);
+	}
+
+	// SAVE FILE
+	imwrite(file_out, overlay);
+
+	cout << "--done--" << endl;
+
+	return 0;
 }

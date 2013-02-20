@@ -67,11 +67,20 @@ double linear_sample_func(vec_d domain, vec_d f, double x){
 template <typename _Tp, int n>
 double sq_dist(Vec<_Tp, n> v1, Vec<_Tp, n> v2){
 	double dist = 0.0;
-	for(int i=0; i<v1.channels; ++i){
+	for(int i=0; i < n; ++i){
 		double diff = v2[i] - v1[i];
 		dist += diff * diff;
 	}
 	return dist;
+}
+
+template <typename _Tp, int n>
+void print_vec(Vec<_Tp, n> vec){
+	std::cout << "[";
+	for(int i = 0; i < n-1; i++){
+		std::cout << vec[i] << "  ";
+	}
+	std::cout << vec[n-1] << "]\n";
 }
 
 void print_vec(double *vec, int n){

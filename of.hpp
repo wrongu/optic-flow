@@ -8,9 +8,12 @@
 #ifndef OF_HPP_
 #define OF_HPP_
 
-#include "math_helpers.hpp"
 #include <cv.h>
+#include "math_helpers.hpp"
 using namespace cv;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 namespace of{
 
@@ -36,5 +39,12 @@ namespace of{
 	Scalar HSV2BGR(Scalar hsv);
 
 }
+
+// driver function
+int of_exec(std::string file_in, std::string file_out, bool disp);
+
+#include "features.hpp"
+#include "segmentation.hpp"
+
 
 #endif /* OF_HPP_ */

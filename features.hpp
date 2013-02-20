@@ -66,6 +66,3 @@ private:
     int n_gradients;
     Mat *gradient_filters;
 };
-
-// driver function
-int feat_exec(std::string file_in, std::string file_out, bool disp);

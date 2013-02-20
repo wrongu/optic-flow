@@ -6,9 +6,9 @@
  */
 
 #include "segmentation.hpp"
-#include "features.hpp"
+#include "of.hpp"
 
-enum ALGO {FEATURES, SEGMENTATION};
+enum ALGO {OPTIC_FLOW, SEGMENTATION};
 enum PARSE_CONTEXT {NONE, OUTPUT, INPUT, ALGORITHM};
 
 struct options {
@@ -28,8 +28,9 @@ PARSE_CONTEXT parse_opt(char* str, options & opts, PARSE_CONTEXT ctx = NONE){
 		return NONE;
 	case ALGORITHM:
 		switch(str[0]){
-			case 'f':
-				opts.algorithm = FEATURES;
+			case 'f': //deprecated 'FEATURES' option
+			case 'o':
+				opts.algorithm = OPTIC_FLOW;
 				break;
 			case 's':
 				opts.algorithm = SEGMENTATION;
@@ -54,27 +55,29 @@ PARSE_CONTEXT parse_opt(char* str, options & opts, PARSE_CONTEXT ctx = NONE){
 		//	-v specify visible to true
 		//	-h specify visible to false ('h'ide)
 		//  -a designate next string as algorithm type
-		//	--f specify features test
+		//	--f specify features test (deprecated. now does optic flow)
+		//	--o specify optic flow test
 		//	--s specify segmentation test
 		switch(str[1]){
-		case 'o':
+		case 'o': // 'o'utput
 			return OUTPUT;
-		case 'f':
+		case 'f': // 'f'ile
 			return INPUT;
-		case 'a':
+		case 'a': // 'a'lgorithm
 			return ALGORITHM;
-		case 'v':
+		case 'v': // 'v'isible
 			opts.display = true;
 			break;
-		case 'h':
+		case 'h': // 'h'idden
 			opts.display = false;
 			break;
 		case '-':
 			switch(str[2]){
-			case 'f':
-				opts.algorithm = FEATURES;
+			case 'f': // '--f'eatures
+			case 'o': // '--o'ptic_flow
+				opts.algorithm = OPTIC_FLOW;
 				break;
-			case 's':
+			case 's': // '--s'egmentation
 				opts.algorithm = SEGMENTATION;
 				break;
 			}
@@ -91,7 +94,7 @@ int main(int argc, char** argv){
 	std::string default_file_in = "images/bakerlibrary.jpg";
 	std::string default_file_out = "output/result.jpg";
 	// set up 'options' struct, parse it
-	options o = {true, FEATURES, "", ""};
+	options o = {true, OPTIC_FLOW, "", ""};
 	PARSE_CONTEXT next_ctx = NONE;
 	for(int i=1; i < argc; ++i)
 		next_ctx = parse_opt(argv[i], o, next_ctx);
@@ -101,8 +104,8 @@ int main(int argc, char** argv){
 
 	// run the algorithm
 	switch(o.algorithm){
-	case FEATURES:
-		return feat_exec(o.file_in, o.file_out, o.display);
+	case OPTIC_FLOW:
+		return of_exec(o.file_in, o.file_out, o.display);
 	case SEGMENTATION:
 		return seg_exec(o.file_in, o.file_out, o.display);
 	default:
