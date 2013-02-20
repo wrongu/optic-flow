@@ -24,11 +24,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>papers</name>
-			<type>2</type>
-			<location>/Users/Richard/Documents/_CLASSES/thesis/code/optic flow/brox10/papers</location>
-		</link>
-	</linkedResources>
 </projectDescription>

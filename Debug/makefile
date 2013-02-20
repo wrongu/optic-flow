@@ -43,22 +43,16 @@ all: optic\ flow
 optic\ flow: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross G++ Linker'
-	g++ -L/usr/local/lib -o "optic flow" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/usr/local/lib/ -o "optic flow" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
-	$(MAKE) --no-print-directory post-build
 
 # Other Targets
 clean:
 	-$(RM) $(C++_DEPS)$(OBJS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) "optic flow"
 	-@echo ' '
 
-post-build:
-	-@echo 'copy binary to project directory'
-	-cp optic\ flow ..
-	-@echo ' '
-
 .PHONY: all clean dependents
-.SECONDARY: post-build
+.SECONDARY:
 
 -include ../makefile.targets

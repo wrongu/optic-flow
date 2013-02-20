@@ -8,9 +8,12 @@
 #ifndef OF_HPP_
 #define OF_HPP_
 
-#include "math_helpers.hpp"
 #include <cv.h>
+#include "math_helpers.hpp"
 using namespace cv;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 namespace of{
 
@@ -30,11 +33,18 @@ namespace of{
 	const SparseSample NO_SPARSE;
 
 	// function headers
-	void best_descriptor_match(const Mat_<vec_d> & desc1, const Mat_<vec_d> & desc2, Mat & dst, const SparseSample & sp1 = NO_SPARSE, const SparseSample & sp2  = NO_SPARSE);
+	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & dst, const SparseSample & sp1 = NO_SPARSE, const SparseSample & sp2  = NO_SPARSE);
 	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max=4, double gamma=1.0, double alpha=1.0, double beta=1.0, int MAX_ITER = 1000, double eps = 0.00001);
 	Mat overlay_field(const Mat & src, const Mat & flow_field);
-	Scalar HSV2BGR(Scalar hsv);
+	Vec3d HSV2BGR(Vec3d hsv);
 
 }
+
+// driver function
+int of_exec(std::string file_in, std::string file_out, bool disp);
+
+#include "features.hpp"
+#include "segmentation.hpp"
+
 
 #endif /* OF_HPP_ */

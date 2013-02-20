@@ -39,6 +39,14 @@ namespace of{
 		// ===================
 		Mat Iz, Ix, Iy, Ixz, Iyz, Ixx, Iyy, Ixy;
 		Mat psi1, psi2, psi3, psi4;
+		// TODO - reduce this function to just the iteration. Let all initialization be done in the calling functions
+		//	to save time when processing live video
+		Ptr<FilterEngine> dx  = createDerivFilter(CV_32F, CV_32F, 1, 0, 3);
+		Ptr<FilterEngine> dy  = createDerivFilter(CV_32F, CV_32F, 0, 1, 3);
+		Ptr<FilterEngine> dxx = createDerivFilter(CV_32F, CV_32F, 2, 0, 3);
+		Ptr<FilterEngine> dyy = createDerivFilter(CV_32F, CV_32F, 0, 2, 3);
+		Ptr<FilterEngine> dxy = createDerivFilter(CV_32F, CV_32F, 1, 1, 3);
+
 		// loop over image scales, coarse to fine
 		for(int k=0; k<=k_max; ++k){
 			Mat im1 = scales1[k];
@@ -62,19 +70,31 @@ namespace of{
 		return 1.0f / (2.0f * sqrt(s_2 + eps_2));
 	}
 
-	void best_descriptor_match(const Mat_<vec_d> & desc1, const Mat_<vec_d> & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){
+	// TODO - move this back to math_helpers and figure out how to get it to still compile
+	template <typename _Tp, int n>
+	double sq_dist(Vec<_Tp, n> v1, Vec<_Tp, n> v2){
+		double dist = 0.0;
+		for(int i=0; i < n; ++i){
+			double diff = v2[i] - v1[i];
+			dist += diff * diff;
+		}
+		return dist;
+	}
+
+	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){
+		std::cout << "entered best_descriptor_match" << std::endl;
 		for(int r=0; r<desc1.rows; ++r){
 			std::cout << "desc. match row " << r << " of " << desc1.rows << std::endl;
 			for(int c=0; c<desc1.cols; ++c){
-				vec_d current_vec = desc1(r,c);
+				lg_feat_vec_t current_vec = desc1.at<lg_feat_vec_t>(r,c);
 				int orig_r = sp1.sparse2Dense(r);
 				int orig_c = sp1.sparse2Dense(c);
 				// find best match in desc2
 				int best_r = 0, best_c = 0;
-				double best_dist = sq_dist(current_vec, desc2(0, 0));
+				double best_dist = sq_dist<FEAT_TYPE, LG_FEAT_SIZE>(current_vec, desc2.at<lg_feat_vec_t>(0, 0));
 				for(int i=0; i<desc2.rows; ++i){
 					for(int j=0; j<desc2.cols; ++j){
-						double next_dist = sq_dist(current_vec, desc2(i, j));
+						double next_dist = sq_dist<FEAT_TYPE, LG_FEAT_SIZE>(current_vec, desc2.at<lg_feat_vec_t>(i, j));
 						if(next_dist < best_dist){
 							best_dist = next_dist;
 							best_r = i;
@@ -86,9 +106,9 @@ namespace of{
 				//	to destination matrix
 				int r_diff = sp2.sparse2Dense(best_r) - orig_r;
 				int c_diff = sp2.sparse2Dense(best_c) - orig_c;
-				// using Vec2s because dst was defined with type CV_16UC2
-				dst.at<Vec2s>(orig_r, orig_c)[0] = r_diff;
-				dst.at<Vec2s>(orig_r, orig_c)[1] = c_diff;
+				// using Vec2f because dst was defined with type CV_32FC2
+				dst.at<Vec2f>(orig_r, orig_c)[0] = (float) r_diff;
+				dst.at<Vec2f>(orig_r, orig_c)[1] = (float) c_diff;
 				std::cout << orig_r << ", " << orig_c << " best match: " << sp2.sparse2Dense(best_r) << ", " << sp2.sparse2Dense(best_c) << std::endl;
 			}
 		}
@@ -106,9 +126,9 @@ namespace of{
 				int h_component = flow_field.at<Vec2s>(r,c)[1];
 				if(h_component != 0 && v_component != 0){
 					double angle = atan2(v_component, h_component);
-					Scalar hsv(angle * 57.29578, 1.0, 1.0); // 180 / pi approx. equals 57.29578
-					Scalar bgr = HSV2BGR(hsv);
-					line(result, Point(r,c), Point(r+v_component, c+h_component), bgr);
+					Vec3d hsv(angle * 57.29578, 1.0, 1.0); // 180 / pi approx. equals 57.29578
+					Vec3d bgr = HSV2BGR(hsv);
+					line(result, Point(r,c), Point(r+v_component, c+h_component), Scalar(bgr[0], bgr[1], bgr[2]));
 				}
 			}
 		}
@@ -118,7 +138,7 @@ namespace of{
 
 	// thanks to http://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
 	// 	for this algorithm
-	Scalar HSV2BGR(Scalar hsv){
+	Vec3d HSV2BGR(Vec3d hsv){
 		double h = hsv[0];
 		double s = hsv[1];
 		double v = hsv[2];
@@ -127,16 +147,85 @@ namespace of{
 		double x = chroma*(1 - abs((int)h2 % 2 - 1));
 		double m = v - chroma;
 		if(h2 < 1)
-			return Scalar(chroma + m, x + m, m);
+			return Vec3d(chroma + m, x + m, m);
 		else if(h2 < 2)
-			return Scalar(x + m, chroma + m, m);
+			return Vec3d(x + m, chroma + m, m);
 		else if(h2 < 3)
-			return Scalar(m, chroma + m, x + m);
+			return Vec3d(m, chroma + m, x + m);
 		else if(h2 < 4)
-			return Scalar(m, x + m, chroma + m);
+			return Vec3d(m, x + m, chroma + m);
 		else if(h2 < 5)
-			return Scalar(x + m, m, chroma + m);
+			return Vec3d(x + m, m, chroma + m);
 		else
-			return Scalar(chroma + m, m, x + m);
+			return Vec3d(chroma + m, m, x + m);
 	}
+}
+
+
+// TEST DRIVER
+int of_exec(std::string file_in, std::string file_out, bool disp){
+	cout << "feat_exec entered" << endl;
+	Mat img = imread(file_in, 1);
+
+	if(!img.data){
+		std::cerr << "Problem loading image: " << file_in << endl;
+		return 1;
+	}
+//	cout << "img read. has depth " << getImageType(img.depth()) << endl;
+//	cout << "img read. has type " << getImageType(img.type()) << endl;
+	img.convertTo(img, CV_FEAT(3));
+//	cout << "img converted to floating pt" << endl;
+//	cout << "img read. has depth " << getImageType(img.depth()) << endl;
+//	cout << "img read. has type " << getImageType(img.type()) << endl;
+
+	// testing optic flow on img and rotated img:
+	Mat rot_matrix = getRotationMatrix2D(Point2f(img.rows/2, img.cols/2), 3.0, 1.0);
+	Mat img_rotated(img.rows, img.cols, img.type());
+	warpAffine(img, img_rotated, rot_matrix, img_rotated.size());
+	img_rotated.convertTo(img_rotated, CV_FEAT(3));
+
+	/*
+	// Test image rotation (works)
+	if(disp_output){
+		namedWindow("original");
+		namedWindow("rotated");
+		imshow("original", img);
+		imshow("rotated", img_rotated);
+		waitKey(0);
+		destroyWindow("original");
+		destroyWindow("rotated");
+	}
+	 */
+
+	cout << "image read. creating HOGFeature descriptors." << endl;
+	of::SparseSample ss1(4, 0);
+	of::SparseSample ss2(1, 0);
+	// compute descriptors of first "frame" sparsely
+	Mat HOG_descriptors = HOG_get_full_descriptors(img, 3, ss1);
+	// compute descriptors of second "frame" at each pixel
+	Mat HOG_descriptors2 = HOG_get_full_descriptors(img_rotated, 3, ss2);
+
+	cout << "holy crap descriptors worked. computing OF initialization. " << endl;
+
+	Mat flow_field(img.rows, img.cols, CV_32FC2);
+	of::best_descriptor_match(HOG_descriptors, HOG_descriptors2, flow_field, ss1, ss2);
+
+	cout << "created descriptors.\nmaking overlay image" << endl;
+
+	Mat overlay = of::overlay_field(img, flow_field);
+
+	if(disp){
+		std::string title ="Optic Flow Visualization";
+		namedWindow(title);
+		imshow(title, overlay);
+		waitKey(0);
+		destroyWindow(title);
+	}
+
+	// SAVE FILE
+	imwrite(file_out, overlay);
+
+	cout << "--done--" << endl;
+
+	return 0;
 }

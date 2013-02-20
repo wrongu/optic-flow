@@ -5,10 +5,6 @@ INCLUDE = `pkg-config --cflags $(HOME)/local/lib/pkgconfig/opencv.pc`
 LIBS = -L$(HOME)/local/lib `cat libflags.make`
 LIB_PATH = $(HOME)/local/lib
 CC = gcc
-#LIBS = -L$(HOME)/local/lib `pkg-config --libs $(HOME)/local/lib/pkgconfig/opencv.pc`
-#LIBS = -L$(HOME)/local/lib/ 
-#LIBS := -L$(HOME)/local/lib -lopencv_video -lopencv_ml -lopencv_core -lopencv_imgproc -lopencv_highgui
-#LIBS = -L$(HOME)/local/lib2 `ls $(HOME)/local/lib2/ | sed 's:l.*:-l& \\:'`
 else
 INCLUDE = -I/usr/local/include/opencv
 LIBS = `pkg-config --libs opencv`
@@ -21,7 +17,8 @@ EXECUTABLE = _run
 
 -include $(OBJS:.o=.d)
 
-all: $(EXECUTABLE)
+all:
+	@make $(EXECUTABLE)
 
 $(EXECUTABLE): LIBPATH $(OBJS)
 	@echo 'building $(EXECUTABLE)'
@@ -31,8 +28,8 @@ $(EXECUTABLE): LIBPATH $(OBJS)
 %.o: %.cpp
 	@echo 'Compiling $<'
 	$(CC) -c $(C_FLAGS) $(INCLUDE) $< -o $@
-	$(CC) -MM $(C_FLAGS) $*.cpp > $*.d
 	@echo ''
+#	$(CC) -MM $(C_FLAGS) $*.cpp > $*.d
 
 clean:
 	rm *.o
