@@ -128,9 +128,9 @@ namespace of{
 				int h_component = flow_field.at<Vec2s>(r,c)[1];
 				if(h_component != 0 && v_component != 0){
 					double angle = atan2(v_component, h_component);
-					Scalar hsv(angle * 57.29578, 1.0, 1.0); // 180 / pi approx. equals 57.29578
-					Scalar bgr = HSV2BGR(hsv);
-					line(result, Point(r,c), Point(r+v_component, c+h_component), bgr);
+					Vec3d hsv(angle * 57.29578, 1.0, 1.0); // 180 / pi approx. equals 57.29578
+					Vec3d bgr = HSV2BGR(hsv);
+					line(result, Point(r,c), Point(r+v_component, c+h_component), Scalar(bgr[0], bgr[1], bgr[2]));
 				}
 			}
 		}
@@ -140,7 +140,7 @@ namespace of{
 
 	// thanks to http://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
 	// 	for this algorithm
-	Scalar HSV2BGR(Scalar hsv){
+	Vec3d HSV2BGR(Vec3d hsv){
 		double h = hsv[0];
 		double s = hsv[1];
 		double v = hsv[2];
@@ -149,17 +149,17 @@ namespace of{
 		double x = chroma*(1 - abs((int)h2 % 2 - 1));
 		double m = v - chroma;
 		if(h2 < 1)
-			return Scalar(chroma + m, x + m, m);
+			return Vec3d(chroma + m, x + m, m);
 		else if(h2 < 2)
-			return Scalar(x + m, chroma + m, m);
+			return Vec3d(x + m, chroma + m, m);
 		else if(h2 < 3)
-			return Scalar(m, chroma + m, x + m);
+			return Vec3d(m, chroma + m, x + m);
 		else if(h2 < 4)
-			return Scalar(m, x + m, chroma + m);
+			return Vec3d(m, x + m, chroma + m);
 		else if(h2 < 5)
-			return Scalar(x + m, m, chroma + m);
+			return Vec3d(x + m, m, chroma + m);
 		else
-			return Scalar(chroma + m, m, x + m);
+			return Vec3d(chroma + m, m, x + m);
 	}
 }
 
