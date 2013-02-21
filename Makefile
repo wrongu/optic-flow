@@ -4,7 +4,7 @@ HOME = /home/rlange
 INCLUDE = `pkg-config --cflags $(HOME)/local/lib/pkgconfig/opencv.pc` 
 LIBS = -L$(HOME)/local/lib `cat libflags.make`
 LIB_PATH = $(HOME)/local/lib
-CC = gcc
+CC = g++
 else
 INCLUDE = -I/usr/local/include/opencv
 LIBS = `pkg-config --libs opencv`
@@ -28,8 +28,8 @@ $(EXECUTABLE): LIBPATH $(OBJS)
 %.o: %.cpp
 	@echo 'Compiling $<'
 	$(CC) -c $(C_FLAGS) $(INCLUDE) $< -o $@
+	$(CC) -MM $(C_FLAGS) $*.cpp > $*.d
 	@echo ''
-#	$(CC) -MM $(C_FLAGS) $*.cpp > $*.d
 
 clean:
 	rm *.o
