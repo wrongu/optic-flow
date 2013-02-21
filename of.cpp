@@ -7,6 +7,12 @@
 
 #include "of.hpp"
 
+/* TODO (having reviewed code organization in opencv/modules/gpu/optical_flow.cpp#BroxOpticalFlow)
+ *  make (or use) image-pyramid type
+ *  encapsulate algorithm in functor object
+ ** gpu matrix operations
+ */
+
 namespace of{
 
 	// continuation_method(src, dst, ...)
@@ -184,6 +190,36 @@ namespace of{
 		else
 			return Vec3d(chroma + m, m, x + m);
 	}
+
+	void quiver(const Mat & img, const Mat & u, const Mat & v, Mat & dst){
+		CV_Assert(img.rows == u.rows && img.cols == u.cols);
+		CV_Assert(img.rows == v.rows && img.cols == v.cols);
+
+		dst = img.clone();
+
+		for(int r=0; r<img.rows; ++r){
+			for(int c=0; c<img.cols; ++c){
+
+			}
+		}
+	}
+
+
+	void of_colorwheel(const Mat & u, const Mat & v, Mat & dst){
+		CV_Assert(v.rows == u.rows && v.cols == u.cols);
+
+		dst.create(u.rows, u.cols, CV_32FC3);
+
+		for(int r=0; r<u.rows; ++r){
+			for(int c=0; c<u.cols; ++c){
+				double angle = atan2(v.at<double>(r,c), u.at<double>(r,c));
+				double magnitude2 = v.at<double>(r,c)*v.at<double>(r,c) + u.at<double>(r,c)*u.at<double>(r,c);
+				if(angle < 0) angle = angle + 6.28319; // add 2*pi for positive angle
+				Vec3d hsv(angle * 57.29578, 1.0, magnitude2 / 12.0); // 180 / pi approx. equals 57.29578
+				dst.at<Vec3d>(r,c) = HSV2BGR(hsv);
+			}
+		}
+	}
 }
 
 
@@ -221,7 +257,7 @@ int of_exec(std::string file_in, std::string file_out, bool disp){
 		destroyWindow("rotated");
 	}
 	 */
-
+/*
 	cout << "image read. creating HOGFeature descriptors." << endl;
 	of::SparseSample ss1(4, 0);
 	of::SparseSample ss2(1, 0);
@@ -251,6 +287,27 @@ int of_exec(std::string file_in, std::string file_out, bool disp){
 	imwrite(file_out, overlay);
 
 	cout << "--done--" << endl;
+*/
+
+	float alpha = 80.0f;
+	float gamma = 100.0f;
+	float sigma = 0.8f;
+	int inner = 3;
+	int outer = 35;
+	int solver = 10;
+	gpu::BroxOpticalFlow optical_flow(alpha, gamma, sigma, inner, outer, solver);
+
+	gpu::GpuMat frame0(img);
+	gpu::GpuMat frame1(img_rotated);
+	gpu::GpuMat u;
+	gpu::GpuMat v;
+	optical_flow(frame0, frame1, u, v);
+
+	Mat colorwheel;
+	Mat u_mat(u);
+	Mat v_mat(v);
+	of::of_colorwheel(u_mat, v_mat, colorwheel);
+	imwrite(file_out, colorwheel);
 
 	return 0;
 }

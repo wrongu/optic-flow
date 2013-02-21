@@ -9,6 +9,7 @@
 #define OF_HPP_
 
 #include <cv.h>
+#include <opencv2/gpu/gpu.hpp>
 #include "math_helpers.hpp"
 using namespace cv;
 using std::cout;
@@ -39,7 +40,8 @@ namespace of{
 	Vec3d HSV2BGR(Vec3d hsv);
 	template <typename im_vec_t, typename vec_t>
 		void flow_transform(const Mat & src, Mat & dst, const Mat & vec_field);
-
+	void quiver(const Mat & img, const Mat & u, const Mat & v, Mat & dst);
+	void of_colorwheel(const Mat & u, const Mat & v, Mat & dst);
 }
 
 // driver function
