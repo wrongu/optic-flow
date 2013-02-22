@@ -9,11 +9,18 @@
 #define OF_HPP_
 
 #include <cv.h>
+#include <vector>
 #include "math_helpers.hpp"
+
+#define FLOW_TYPE(n) CV_32FC(n)
+#define flow_t float
+
 using namespace cv;
 using std::cout;
 using std::cerr;
 using std::endl;
+using std::vector;
+
 
 namespace of{
 
@@ -33,12 +40,12 @@ namespace of{
 	const SparseSample NO_SPARSE;
 
 	// function headers
-	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & dst, const SparseSample & sp1 = NO_SPARSE, const SparseSample & sp2  = NO_SPARSE);
+	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & u, Mat & v, const SparseSample & sp1, const SparseSample & sp2);
 	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max=4, double gamma=1.0, double alpha=1.0, double beta=1.0, int MAX_ITER = 1000, double eps = 0.00001);
 	Mat overlay_field(const Mat & src, const Mat & flow_field);
 	Vec3d HSV2BGR(Vec3d hsv);
-	template <typename im_vec_t, typename vec_t>
-		void flow_transform(const Mat & src, Mat & dst, const Mat & vec_field);
+	template <typename wtype>
+		void flow_transform(const Mat & src, Mat & dst, const Mat & u, const Mat & v);
 
 }
 
