@@ -77,8 +77,8 @@ Mat get_gaussian_derivative_filter(int m_width, double *sigma, double sample_rad
 	int n = fine*m_width;
 	double root2 = 1.415;
 	// more than sqrt(2) wider so it can handle rotation
-	vec_d domain_fine = linspace(-sample_radius*root2, sample_radius*root2, n);
-	vec_d domain = linspace(-sample_radius, sample_radius, m_width);
+	vec_d domain_fine = _math::linspace(-sample_radius*root2, sample_radius*root2, n);
+	vec_d domain = _math::linspace(-sample_radius, sample_radius, m_width);
 	
 	// square sigma values here to reduce multiplications
 	double sigma2x = sigma[0] * sigma[0];
@@ -91,8 +91,8 @@ Mat get_gaussian_derivative_filter(int m_width, double *sigma, double sample_rad
 	GaussDerivFunc gauss_y (n_deriv, sigma2y);
 	
 	// get 1D curves for each x and y (convolved in loop below)
-	vec_d x_bell = map_func(domain_fine, gauss_x);
-	vec_d y_bell = map_func(domain_fine, gauss_y);
+	vec_d x_bell = _math::map_func(domain_fine, gauss_x);
+	vec_d y_bell = _math::map_func(domain_fine, gauss_y);
 	
 	// output x and y curves for testing
 	//print_vec(x_bell);
@@ -112,8 +112,8 @@ Mat get_gaussian_derivative_filter(int m_width, double *sigma, double sample_rad
 			double roty = x*s + y*c;
 			
 			// cout << "[%f, %f, %f]\n", domain_fine[0], rotx, *(domain_fine.end()-1));
-			double fx = linear_sample_func(domain_fine, x_bell, rotx);
-			double fy = linear_sample_func(domain_fine, y_bell, roty);
+			double fx = _math::linear_sample_func(domain_fine, x_bell, rotx);
+			double fy = _math::linear_sample_func(domain_fine, y_bell, roty);
 			
 			// Image is as a matrix, so y is rows and x is columns
 			ret.at<double>(yi,xi) = fx * fy;
@@ -130,8 +130,8 @@ Mat get_center_difference_filter(int m_width, double sigma, double sample_radius
 	
 	double n = fine * m_width;
 	double root2 = 1.415;
-	vec_d domain_fine = linspace(-sample_radius*root2, sample_radius*root2, (int)n);
-	vec_d domain = linspace(-sample_radius, sample_radius, m_width);
+	vec_d domain_fine = _math::linspace(-sample_radius*root2, sample_radius*root2, (int)n);
+	vec_d domain = _math::linspace(-sample_radius, sample_radius, m_width);
 	
 	// square sigma values here to reduce multiplications
 	double sigma2 = sigma * sigma;
@@ -140,7 +140,7 @@ Mat get_center_difference_filter(int m_width, double sigma, double sample_radius
 	GaussDerivFunc gauss (2, sigma2);
 	
 	// get 1D curve
-	vec_d bell = map_func(domain_fine, gauss);
+	vec_d bell = _math::map_func(domain_fine, gauss);
 	
 	// revolve curve
 	for(int xi=0; xi<m_width; ++xi){
@@ -150,7 +150,7 @@ Mat get_center_difference_filter(int m_width, double sigma, double sample_radius
 			
 			// revolved, so 'x' is really just dist-to-zero
 			double r = sqrt(x*x + y*y);
-			double fx = linear_sample_func(domain_fine, bell, r);
+			double fx = _math::linear_sample_func(domain_fine, bell, r);
 			
 			// y is rows and x is columns in the matrix
 			ret.at<double>(yi,xi) = fx*scale;
@@ -160,7 +160,7 @@ Mat get_center_difference_filter(int m_width, double sigma, double sample_radius
 	return ret;
 }
 
-Mat get_texture_channel(const Mat & img, int num_textures, int kmeans_attempts){
+Mat get_texture_channel(const Mat &img, int num_textures, int kmeans_attempts){
 	Mat img_gray(img.rows, img.cols, CV_32F);
 	cvtColor(img,img_gray,CV_RGB2GRAY);
 	
