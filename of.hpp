@@ -24,8 +24,6 @@ using std::vector;
 
 namespace of{
 
-	class SparseSample;
-
 	// this class encapsulates the translation from- and to- sparse coordinates
 	//	with dense coordinates
 	class SparseSample{
@@ -33,6 +31,8 @@ namespace of{
 		SparseSample(int _spacing = 1, int _offset = 0) : spacing(_spacing), offset(_offset) {}
 		inline int dense2Sparse(int coord) const { return (coord-offset) / spacing; }
 		inline int sparse2Dense(int coord) const { return coord * spacing + offset; }
+		template <typename im_type>
+			im_type at(Mat & sparse_src, int r, int c, im_type fillval = 0);
 		int spacing;
 		int offset;
 	};

@@ -33,4 +33,6 @@ namespace _math{
 	void print_vec(double *vec, int n);
 
 	void print_vec(vec_d v);
+
+	std::string getImageType(int number);
 }

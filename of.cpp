@@ -123,29 +123,36 @@ namespace of{
 
 	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & u, Mat & v, const SparseSample & sp1, const SparseSample & sp2){
 		std::cout << "entered best_descriptor_match" << std::endl;
-		CV_Assert(desc1.rows == desc2.rows && desc1.cols == desc2.cols);
 		// create u and v at original sizes
 		u.create(desc1.size(), FLOW_TYPE(1));
 		v.create(desc1.size(), FLOW_TYPE(1));
-		Size orig_size = desc1.size();
+		Size size1 = desc1.size();
+		Size size2 = desc1.size();
 		// reshape such that channels become rows, and wxh=N image flattened to Nx1
-		desc1.reshape(1, desc1.rows*desc1.cols);
-		desc2.reshape(1, desc2.rows*desc2.cols);
+		Mat desc1_1D = desc1.reshape(1, desc1.rows*desc1.cols);
+		Mat desc2_1D = desc2.reshape(1, desc2.rows*desc2.cols);
 		// use built-in "brute force" matcher from opencv
 		bool cross_check = true; // whether to ensure (i,j) match is transitive [ie (j,i) is best reverse match]
 		BFMatcher::BFMatcher desc_matcher(NORM_L2, cross_check);
-		vector<DMatch> matches();
+		vector<DMatch> matches;
 		// get matches
-		desc_matcher.match(desc1, desc2, matches);
+		std::cout << "running match() on desc1_1D = " << desc1_1D.rows << "x" << desc1_1D.cols << " : " << _math::getImageType(desc1_1D.type()) << std::endl;
+		std::cout << "\t and desc2_1D = " << desc2_1D.rows << "x" << desc2_1D.cols << " : " << _math::getImageType(desc2_1D.type()) << std::endl;
+		desc_matcher.match(desc1_1D, desc2_1D, matches);
+		std::cout << "building flow matrices from matches" << std::endl;
 		for(int i=0; i<matches.size(); ++i){
 			DMatch m = matches[i];
 			int i1 = m.queryIdx; // 1D index from desc1
 			int i2 = m.trainIdx; // 1D index from desc2
 			// reshape 1D -> 2D indices
-			int r1 = i1 / orig_size.width;
-			int c1 = i1 % orig_size.width;
-			int r2 = i2 / orig_size.width;
-			int c2 = i2 % orig_size.width;
+			int r1 = i1 / size1.width;
+			int c1 = i1 % size1.width;
+			r1 = sp1.sparse2Dense(r1);
+			c1 = sp1.sparse2Dense(c1);
+			int r2 = i2 / size2.width;
+			int c2 = i2 % size2.width;
+			r2 = sp2.sparse2Dense(r2);
+			c2 = sp2.sparse2Dense(c2);
 			// record match in u (horz flow) and v (vert flow)
 			u.at<flow_t>(r1, c1) = (flow_t)(c2 - c1);
 			v.at<flow_t>(r1, c1) = (flow_t)(r2 - r1);
@@ -195,6 +202,16 @@ namespace of{
 			return Vec3d(x + m, m, chroma + m);
 		else
 			return Vec3d(chroma + m, m, x + m);
+	}
+
+	template <typename im_type>
+				im_type SparseSample::at(Mat & sparse_src, int r, int c, im_type fillval){
+		int sparse_r = dense2Sparse(r);
+		int sparse_c = dense2Sparse(c);
+		if(sparse2Dense(sparse_r) == r && sparse2Dense(sparse_c) == c)
+			return sparse_src.at<im_type>(sparse_r, sparse_c);
+		else
+			return fillval;
 	}
 }
 
