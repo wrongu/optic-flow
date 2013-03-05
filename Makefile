@@ -2,7 +2,7 @@ UNAME = $(shell uname)
 ifeq ($(UNAME), Linux)
 HOME = /home/rlange
 INCLUDE = `pkg-config --cflags $(HOME)/local/lib/pkgconfig/opencv.pc` 
-LIBS = -L$(HOME)/local/lib `cat libflags.make`
+LIBS = -L$(HOME)/local/lib/ `cat libflags.make`
 LIB_PATH = $(HOME)/local/lib
 CC = gcc
 else
@@ -22,7 +22,7 @@ all:
 
 $(EXECUTABLE): LIBPATH $(OBJS)
 	@echo 'building $(EXECUTABLE)'
-	@$(CC) $(C_FLAGS) $(OBJS) $(LIBS) -o $(EXECUTABLE)
+	$(CC) $(C_FLAGS) $(OBJS) $(LIBS) -o $(EXECUTABLE)
 	@echo '..done'
 
 %.o: %.cpp
