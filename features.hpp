@@ -12,7 +12,6 @@
 #include <highgui.h>
 #include <iostream>
 #include <vector>
-#include "math_helpers.hpp"
 #include "segmentation.hpp"
 #include "of.hpp"
 

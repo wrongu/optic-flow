@@ -19,12 +19,10 @@ namespace of{
 	// 	this is an implementation of the algorithm outlined in "Large Displacement Optical Flow: Descriptor Matching in Variational Motion Estimation"
 	//	dst should be of type CV_32FC2
 	//		channel 0 is the row/vertical component of OF; channel 1 is column/horizontal
-	//		*initialize dst to all 0s*
 	//  img1 and img2 can be any type as long as they are the same.
 	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max, double gamma, double alpha, double beta, int MAX_ITER, double eps){
 		Mat *scales1 = new Mat[k_max+1];
 		Mat *scales2 = new Mat[k_max+1];
-		Mat & w = dst; // the paper refers to the optic flow field as 'w', so here I alias it as such
 		// This loop constructs multiple scales of the image such that
 		//	scales[0] contains the lowest resolution and
 		//	scales[k_max] contains the highest resolution
@@ -43,8 +41,8 @@ namespace of{
 		// ===================
 		// CONTINUATION METHOD
 		// ===================
-		Mat img2_offset, Iz, Ix, Iy, Ixz, Iyz, Ixx, Iyy, Ixy;
-		Mat psi1, psi2, psi3, psi4;
+		// initialize image derivatives and other temporary images used in computation
+		Mat u, v;
 		// TODO - reduce this function to just the iteration. Let all initialization be done in the calling functions
 		//	to save time when processing live video
 		// TODO - gpu::createDerivFilter_GPU for parallel filtering
@@ -53,15 +51,27 @@ namespace of{
 		Ptr<FilterEngine> dxx = createDerivFilter(CV_32F, CV_32F, 2, 0, 3);
 		Ptr<FilterEngine> dyy = createDerivFilter(CV_32F, CV_32F, 0, 2, 3);
 		Ptr<FilterEngine> dxy = createDerivFilter(CV_32F, CV_32F, 1, 1, 3);
-		// img2_offest = img2(x + w)
+
+		// ===================
+		//	Loop over scales
+		// ===================
 		// loop over image scales, coarse to fine
 		for(int k=0; k<=k_max; ++k){
+			Mat img2_offset, Iz, Ix, Iy, Ixz, Iyz, Ixx, Iyy, Ixy;
 			Mat im1 = scales1[k];
 			Mat im2 = scales2[k];
+			// du is used for the update: u(k+1) = u(k) + du(k)
+			//	initialized to 0 before l-iteration
+			Mat du(im1.rows, im1.cols, CV_32F);
+			Mat dv(im1.rows, im1.cols, CV_32F);
+			// im2_sampled is Im2(x + w)
 			Mat im2_sampled(im1.rows, im1.cols, im1.type());
-			Mat dw(im1.rows, im1.cols, w.type()); // dw is used for the update: w(k+1) = w(k) + dw(k)
-			flow_transform<Vec3f, Vec2f>(im2, im2_sampled, w);
-			// Fixed-point iteration 'constants' and pre-evaluated functions:
+			flow_transform<Vec3f>(im2, im2_sampled, u, v);
+			// =======================
+			//  Fixed-point iteration
+			// =======================
+			// 'constants' and pre-evaluated functions for lagged nonlinearity
+			//	(i.e. functions of du, dv held constant in each iteration of l so that it becomes linear)
 			Iz = im2_sampled - im1;
 			(*dx).apply(im2_sampled, Ix);
 			(*dy).apply(im2_sampled, Iy);
@@ -70,11 +80,10 @@ namespace of{
 			(*dxy).apply(im2_sampled, Ixy);
 			(*dx).apply(Iz, Ixz);
 			(*dy).apply(Iz, Iyz);
-			// 'delta_max' is our max change between iterations. break when it is within 'eps' of 0
-			//	initialized to eps to ensure that the loop is entered
-			double delta_max = eps;
+			// TODO - add convergence critereon
 			// fixed point iteration loop: loop until convergence (specified by 'eps') or max iterations
-			for(int l=0; l < MAX_ITER && delta_max >= eps; ++l){
+			for(int l=0; l < MAX_ITER; ++l){
+				Mat psi_1, psi_2, psi_3, psi_4;
 
 			}
 		}
@@ -83,15 +92,19 @@ namespace of{
 		delete[] scales2;
 	}
 
+	FilterEngine createPsiDerivFilter(){
+
+	}
+
 	// dst(r,c) <- src(r + u(r,c), c + v(r,c))
 	//	where vec_field(r,c) = (u, v)
-	template <typename im_vec_t, typename vec_t>
-	void flow_transform(const Mat & src, Mat & dst, const Mat & vec_field){
+	template <typename im_vec_t>
+	void flow_transform(const Mat & src, Mat & dst, const Mat & u, const Mat & v){
 		dst = src.clone();
 		for(int r=0; r<src.rows; ++r){
 			for(int c=0; c<src.cols; ++c){
-				int sample_r = borderInterpolate(r + vec_field.at<vec_t>(r, c)[0], src.rows, BORDER_DEFAULT);
-				int sample_c = borderInterpolate(c + vec_field.at<vec_t>(r, c)[1], src.cols, BORDER_DEFAULT);
+				int sample_r = borderInterpolate((int)(r + v.at<float>(r, c)), src.rows, BORDER_DEFAULT);
+				int sample_c = borderInterpolate((int)(c + u.at<float>(r, c)), src.cols, BORDER_DEFAULT);
 				dst.at<im_vec_t>(r,c) = src.at<im_vec_t>(sample_r, sample_c);
 			}
 		}
@@ -113,6 +126,7 @@ namespace of{
 	}
 
 	void best_descriptor_match(const Mat & desc1, const Mat & desc2, Mat & dst, const SparseSample & sp1, const SparseSample & sp2){
+		// TODO - sort desc1 and desc2: O(n log n); use binary search: O(log m) to reduce n*m to n log n
 		std::cout << "entered best_descriptor_match" << std::endl;
 		for(int r=0; r<desc1.rows; ++r){
 			std::cout << "desc. match row " << r << " of " << desc1.rows << std::endl;
@@ -144,6 +158,17 @@ namespace of{
 			}
 		}
 		// TODO - reverse-check and discard any that don't match desc2 --> desc1 (as an optional check)
+	}
+
+	void PsiDerivFilter::operator()(const uchar** src, uchar* dst, int dststep, int count, int width, int cn){
+		// TODO - finish this operator
+        for( ; count > 0; count--, dst += dststep, src++ )
+        {
+            for(int i=0; i < width; i++ )
+            {
+                dst[i] = castOp(s0);
+            }
+        }
 	}
 
 	Mat overlay_field(const Mat & src, const Mat & flow_field){

@@ -33,7 +33,6 @@ $(EXECUTABLE): LIBPATH $(OBJS)
 
 clean:
 	rm *.o
-	rm *.d
 	rm _run
 
 LIBPATH:

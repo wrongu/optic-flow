@@ -19,6 +19,7 @@ using std::endl;
 namespace of{
 
 	class SparseSample;
+	class PsiDerivFilter;
 
 	// this class encapsulates the translation from- and to- sparse coordinates
 	//	with dense coordinates
@@ -31,6 +32,15 @@ namespace of{
 		int offset;
 	};
 
+	class PsiDerivFilter : public BaseFilter
+	{
+	public:
+		void PsiDerivFilter(){ eps = 0.0001; }
+		void operator()(const uchar** src, uchar* dst, int dststep, int dstcount, int width, int cn);
+	private:
+		double eps;
+	};
+
 	const SparseSample NO_SPARSE;
 
 	// function headers
@@ -38,8 +48,13 @@ namespace of{
 	void continuation_method(const Mat & img1, const Mat & img2, Mat & dst, int k_max=4, double gamma=1.0, double alpha=1.0, double beta=1.0, int MAX_ITER = 1000, double eps = 0.00001);
 	Mat overlay_field(const Mat & src, const Mat & flow_field);
 	Vec3d HSV2BGR(Vec3d hsv);
+<<<<<<< HEAD
 	template <typename im_vec_t, typename vec_t>
 		void flow_transform(const Mat & src, Mat & dst, const Mat & vec_field);
+=======
+	template <typename im_vec_t>
+		void flow_transform(const Mat & src, Mat & dst, const Mat & u, const Mat & v);
+>>>>>>> a3c6ca1299296fd8348dc7b62cbdc22c7d70285a
 	void quiver(const Mat & img, const Mat & u, const Mat & v, Mat & dst);
 	void of_colorwheel(const Mat & u, const Mat & v, Mat & dst);
 }

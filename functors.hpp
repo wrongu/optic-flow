@@ -54,3 +54,18 @@ class GaussDerivFunc : public DoubleFunc
 		int _nd;
 		double _sigma;
 };
+
+double psi_deriv(double s_2, double eps_2);
+
+class PsiDerivFunc : public DoubleFunc
+{
+public:
+public:
+	PsiDerivFunc (double eps2) : _eps2(eps2) {}
+	~PsiDerivFunc(){}
+    double operator() (double s_2) {
+    	return psi_deriv(s_2, _eps2);
+	}
+private:
+	int _eps2;
+};
